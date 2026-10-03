@@ -127,6 +127,9 @@ services:
       MOCK_PSP_WEBHOOK_URL: http://nginx/webhooks/payment
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:?WEBHOOK_SECRET is required}
       MOCK_PSP_TIMEOUT_DELAY_MS: 5000
+      # The webhook must land after the app's PROVIDER_TIMEOUT_MS (3000), or the
+      # card_timeout scenario turns into "webhook before the response" and never hits 202.
+      MOCK_PSP_WEBHOOK_DELAY_MS: 6000
 
   nginx:
     image: nginx:1.27-alpine

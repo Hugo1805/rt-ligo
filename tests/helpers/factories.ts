@@ -136,3 +136,28 @@ export async function createLedgerEntry(
   });
 }
 
+export function newIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
+export interface CashInBodyOverrides {
+  amount?: number;
+  currency?: "PEN";
+  paymentMethod?: string;
+  payment_method?: string;
+}
+
+export function cashInBody(
+  userId: string,
+  overrides?: CashInBodyOverrides
+) {
+  return {
+    user_id: userId,
+    amount: overrides?.amount ?? 100.0,
+    currency: overrides?.currency ?? "PEN",
+    payment_method:
+      overrides?.paymentMethod ?? overrides?.payment_method ?? "card_ok",
+  };
+}
+
+

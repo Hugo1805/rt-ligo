@@ -164,3 +164,9 @@
 - **Propuesta del agente:** Antigravity escribió 18 escenarios HTTP de integración con 3 pods simulados, incluidos 20 requests concurrentes con la misma key, 60 keys distintas del mismo usuario y Redis caído. Todos en verde.
 - **Detectado por:** Claude Code, que no aceptó el verde sin probar que los tests detectan el bug que dicen cubrir. Una primera mutación (tratar el duplicado del `create` como propio) sobrevivió.
 - **Resultado:** no era un test débil sino defensa en profundidad: el CAS `PENDING→PROCESSING` frenaba el segundo cobro. Al quitar también ese CAS, con Redis arriba los tests seguían pasando por el lock, y con Redis caído el escenario 13 detectó el segundo `charge`. Queda demostrado con evidencia que Redis optimiza y PostgreSQL garantiza.
+
+### 23. T7.3: el e2e de timeout probaba otro escenario
+
+- **Propuesta del agente:** Antigravity escribió 6 tests e2e contra nginx y dos réplicas. El de `card_timeout` esperaba `202 unknown` y recibía `200 completed`.
+- **Detectado por:** Antigravity, que en vez de aceptar el `200` rastreó la causa: el mock enviaba el webhook a los 1000 ms, antes del timeout de 3000 ms de la app, así que el webhook completaba la operación antes de la respuesta. Se detuvo porque el arreglo estaba en `docker-compose.yml`, fuera de su tabla de archivos.
+- **Resultado:** Claude Code fijó `MOCK_PSP_WEBHOOK_DELAY_MS: 6000` en `mock-psp` (introducido sin ese valor en T7.2). 6 de 6 en verde dos veces. La configuración vieja no rompía la app: ejercitaba R9.8 de punta a punta, y el test de timeout ahora ejercita el camino `UNKNOWN`.

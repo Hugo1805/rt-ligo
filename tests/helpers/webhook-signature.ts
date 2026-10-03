@@ -18,8 +18,18 @@ export interface PostWebhookOptions {
   headers?: Record<string, string>;
 }
 
-export async function postWebhook(
+export function postWebhook(
   app: Hono<AppEnv>,
+  rawBody: string,
+  options?: PostWebhookOptions
+): Promise<Response>;
+export function postWebhook(
+  baseUrl: string,
+  rawBody: string,
+  options?: PostWebhookOptions
+): Promise<Response>;
+export async function postWebhook(
+  target: Hono<AppEnv> | string,
   rawBody: string,
   options: PostWebhookOptions = {}
 ): Promise<Response> {
@@ -34,9 +44,21 @@ export async function postWebhook(
     headers["X-Provider-Signature"] = signWebhook(rawBody, options.secret, options.timestamp);
   }
 
-  return app.request("/webhooks/payment", {
+  if (typeof target === "string") {
+    const url = target.endsWith("/webhooks/payment")
+      ? target
+      : `${target.replace(/\/$/, "")}/webhooks/payment`;
+    return fetch(url, {
+      method: "POST",
+      headers,
+      body: rawBody,
+    });
+  }
+
+  return target.request("/webhooks/payment", {
     method: "POST",
     headers,
     body: rawBody,
   });
 }
+
