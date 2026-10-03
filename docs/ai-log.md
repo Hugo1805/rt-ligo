@@ -119,3 +119,9 @@
 - **Propuesta del agente:** Gemini escribió el schema exacto y la config de Prisma 7 correcta, gracias a las trampas del plan. Pero en `prisma.config.ts` y `seed.ts` puso `process.env.DATABASE_URL ?? "postgresql://...localhost:5432/cashin"`. No había `.env`, y la verificación pasó solo por ese fallback.
 - **Detectado por:** Claude Code, al notar que la verificación pasaba sin `.env`.
 - **Resultado:** se cambió a `env("DATABASE_URL")`, que falla si falta la variable. Un default en la URL de la base convierte un error de configuración en escrituras sobre la base equivocada, por ejemplo tests de integración limpiando la base de dev.
+
+### 16. T2.4: refinamiento de zod 4 que se salta y reintentos en cero
+
+- **Propuesta del agente:** Gemini validó la config con un `.refine` a nivel de objeto para exigir `PROVIDER_BASE_URL` en modo `http`, y `PROVIDER_MAX_RETRIES` con `.positive()`. Sus tests pasaban porque probaban cada error por separado.
+- **Detectado por:** Claude Code, probando combinaciones de errores fuera de los tests del agente.
+- **Resultado:** en zod 4 el refinamiento no corre si otro campo falla, así que el error no listaba todas las variables. Se agregó `when: () => true`. `PROVIDER_MAX_RETRIES` pasó a `.nonnegative()` para admitir `0`. Se sumaron dos tests.
