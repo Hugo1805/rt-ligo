@@ -58,7 +58,7 @@
 ## Fase 7 · E2E
 
 - [x] 7.1 `tools/mock-psp/` y `src/infra/payment-provider/http.provider.ts`. — design §11
-- [ ] 7.2 `Dockerfile` de la app y perfil `e2e` con `app1`, `app2`, `nginx` y `mock-psp`. — R4
+- [x] 7.2 `Dockerfile` de la app y perfil `e2e` con `app1`, `app2`, `nginx` y `mock-psp`. — R4
 - [ ] 7.3 `tests/e2e/` según el plan de verificación. — R14.2
 
 ## Fase 8 · Terraform

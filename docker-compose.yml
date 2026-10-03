@@ -1,3 +1,5 @@
+name: rt-ligo
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -28,6 +30,118 @@ services:
       timeout: 3s
       retries: 5
       start_period: 3s
+
+  migrate:
+    build: .
+    image: rt-ligo-app:e2e
+    container_name: cashin-migrate
+    profiles:
+      - e2e
+    command: ["bunx", "--bun", "prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: postgresql://cashin:cashin@postgres:5432/cashin_e2e
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app1:
+    build: .
+    image: rt-ligo-app:e2e
+    container_name: cashin-app1
+    profiles:
+      - e2e
+    ports:
+      - "3101:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://cashin:cashin@postgres:5432/cashin_e2e
+      REDIS_URL: redis://redis:6379/2
+      PROVIDER_MODE: http
+      PROVIDER_BASE_URL: http://mock-psp:3001
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?WEBHOOK_SECRET is required}
+      POD_ID: app1
+      RECONCILE_INTERVAL_MS: 1000
+      RECONCILE_STALE_MS: 5000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-psp:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  app2:
+    build: .
+    image: rt-ligo-app:e2e
+    container_name: cashin-app2
+    profiles:
+      - e2e
+    ports:
+      - "3102:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://cashin:cashin@postgres:5432/cashin_e2e
+      REDIS_URL: redis://redis:6379/2
+      PROVIDER_MODE: http
+      PROVIDER_BASE_URL: http://mock-psp:3001
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?WEBHOOK_SECRET is required}
+      POD_ID: app2
+      RECONCILE_INTERVAL_MS: 1000
+      RECONCILE_STALE_MS: 5000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-psp:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  mock-psp:
+    build: .
+    image: rt-ligo-app:e2e
+    container_name: cashin-mock-psp
+    profiles:
+      - e2e
+    command: ["bun", "tools/mock-psp/server.ts"]
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      MOCK_PSP_WEBHOOK_URL: http://nginx/webhooks/payment
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?WEBHOOK_SECRET is required}
+      MOCK_PSP_TIMEOUT_DELAY_MS: 5000
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: cashin-nginx
+    profiles:
+      - e2e
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      app1:
+        condition: service_healthy
+      app2:
+        condition: service_healthy
 
 volumes:
   postgres_data:
