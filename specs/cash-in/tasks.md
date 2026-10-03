@@ -40,7 +40,7 @@
 - [x] 4.3 `cash-in.repository.ts`: create con `P2002`, `findByKey` y CAS con `updateMany`. — R2, R7.4
 - [x] 4.4 `withDbRetry` en `src/shared/` para errores transitorios de Prisma. — R11
 - [x] 4.5 `applyCredit` en `src/features/wallet/wallet.service.ts`. — R8
-- [ ] 4.6 `cash-in.service.ts` según design §3. Test unitario con dobles. — R1, R5, R6
+- [x] 4.6 `cash-in.service.ts` según design §3. Test unitario con dobles. — R1, R5, R6
 - [ ] 4.7 `cash-in.routes.ts` con `zValidator` de header y body, y mapeo a HTTP. — R1, R2, R12
 - [ ] 4.8 `cash-in.int.test.ts` de idempotencia, concurrencia, éxito, fallo, timeout y saldo. — R2 a R8
 
