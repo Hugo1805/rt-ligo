@@ -50,6 +50,7 @@ export interface CreateOperationOverrides {
   leaseOwner?: string | null;
   leaseUntil?: Date | null;
   completedAt?: Date | null;
+  updatedAt?: Date;
 }
 
 export async function createOperation(
@@ -98,6 +99,9 @@ export async function createOperation(
         : {}),
       ...(overrides?.completedAt !== undefined
         ? { completedAt: overrides.completedAt }
+        : {}),
+      ...(overrides?.updatedAt !== undefined
+        ? { updatedAt: overrides.updatedAt }
         : {}),
     },
   });
