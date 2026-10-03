@@ -140,3 +140,9 @@
   - T3.1: la tabla de transiciones exportada era `readonly` solo en tipos; se congeló con `Object.freeze`.
   - T4.1: errores con un constructor ambiguo para `cause`, y el fake devolvía el objeto guardado, mutable desde afuera.
   - T8.1: la clave de RDS con `#`, `?` y `%` se interpolaba sin codificar en `DATABASE_URL`, que habría impedido conectar en el primer deploy.
+
+### 19. T4.4: una caída real de Postgres no se reintentaba
+
+- **Propuesta del agente:** Antigravity implementó `withDbRetry` con los 6 códigos de design §7 y tests con errores de Prisma construidos a mano. Marcó todos los criterios, pero omitió la prueba manual con Postgres caído que el plan pedía en sus trampas.
+- **Detectado por:** Claude Code, probando con el adapter real contra un puerto cerrado, una IP que no responde y una clave incorrecta.
+- **Resultado:** con `@prisma/adapter-pg` el puerto cerrado llega como `code: "ECONNREFUSED"` y el timeout como un `Error` plano del pool de `pg`. Ninguno era transitorio, así que una caída de DB respondía `500` en vez de `503` con `Retry-After`. Se documentó en design §7, se agregaron los códigos de red y los mensajes del pool, y se sumaron tests. Lección: un test con errores fabricados prueba la forma que uno supone, no la que llega en una caída real.

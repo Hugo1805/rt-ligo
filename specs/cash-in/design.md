@@ -293,6 +293,16 @@ El timeout no se reintenta en línea para no alargar el request de la app. Reint
 
 `withDbRetry(fn)` reintenta la unidad de trabajo ante errores transitorios: `P1001`, `P1002`, `P1008`, `P1017`, `P2024` y `P2034`. Máximo 3 intentos con backoff. Al agotarse, lanza `SERVICE_UNAVAILABLE`. Cada unidad es idempotente, así que reintentarla no duplica efectos.
 
+Con `@prisma/adapter-pg`, una caída real de PostgreSQL no llega con esos códigos. Se verificó a mano en T4.4:
+
+| Caso | Error que llega |
+|---|---|
+| Puerto cerrado | `PrismaClientKnownRequestError` con `code: "ECONNREFUSED"` |
+| Host que no responde | `Error` del pool de `pg`: `Connection terminated due to connection timeout` |
+| Conexión cortada con el pool abierto | El pool reconecta solo y la consulta no falla |
+
+Por eso también son transitorios los códigos de red `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT` y `EPIPE` en `code`, y los errores del pool `Connection terminated due to connection timeout`, `Connection terminated unexpectedly` y `timeout exceeded when trying to connect`, que solo se reconocen por el mensaje. Una credencial inválida (`P1000`) no es transitoria.
+
 ### Reconciliador · R10
 
 Corre en cada pod con un intervalo configurable.
