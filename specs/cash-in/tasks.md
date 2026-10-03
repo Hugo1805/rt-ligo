@@ -13,7 +13,7 @@
 - [x] 1.4 Carpeta `specs/cash-in/plans/` con su plantilla.
 - [x] 1.5 `git init` con rama `main`, `.gitignore` y primer commit.
 - [x] 1.6 Crear el repositorio público en GitHub con `gh repo create` y hacer push.
-- [ ] 1.7 Revisión y aprobación de los specs por el usuario.
+- [x] 1.7 Revisión y aprobación de los specs por el usuario.
 
 ## Fase 2 · Base
 
