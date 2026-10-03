@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import type { OperationStatus } from "../generated/prisma/enums";
+import type { OperationStatus } from "../../../src/generated/prisma/enums";
 import {
   TRANSITIONS,
   allowedSources,
   canTransition,
   isTerminal,
-} from "./operation-state-machine";
+} from "../../../src/shared/operation-state-machine";
 
 const ALL_STATUSES: readonly OperationStatus[] = [
   "PENDING",

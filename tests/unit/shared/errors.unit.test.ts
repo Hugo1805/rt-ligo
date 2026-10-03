@@ -4,7 +4,7 @@ import {
   AppError,
   type ErrorCode,
   type FieldError,
-} from "./errors";
+} from "../../../src/shared/errors";
 
 describe("ERROR_CATALOG", () => {
   test("contains exactly the 12 error codes from design §9", () => {

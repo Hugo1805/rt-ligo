@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { Prisma } from "../../generated/prisma/client";
+import { Prisma } from "../../../../src/generated/prisma/client";
 import {
   computeRequestHash,
   type RequestHashInput,
-} from "./cash-in.request-hash";
+} from "../../../../src/features/cash-in/cash-in.request-hash";
 
 describe("computeRequestHash", () => {
   const baseInput: RequestHashInput = {

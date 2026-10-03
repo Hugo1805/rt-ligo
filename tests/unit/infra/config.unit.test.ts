@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import os from "node:os";
-import { loadConfig } from "./config";
+import { loadConfig } from "../../../src/infra/config";
 
 const validBaseEnv = {
   DATABASE_URL: "postgresql://cashin:cashin@localhost:5432/cashin",

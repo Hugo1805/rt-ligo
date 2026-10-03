@@ -3,7 +3,7 @@ import {
   computeBackoffMs,
   retry,
   type RetryOptions,
-} from "./retry";
+} from "../../../src/shared/retry";
 
 describe("computeBackoffMs", () => {
   test("computes backoff with default baseMs (100) and capMs (1000) with fixed random", () => {

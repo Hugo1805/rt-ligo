@@ -1,20 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { Prisma } from "../../generated/prisma/client";
-import type { Lock, LockResult } from "../../infra/lock";
-import { createLogger } from "../../infra/logger";
+import { Prisma } from "../../../../src/generated/prisma/client";
+import type { Lock, LockResult } from "../../../../src/infra/lock";
+import { createLogger } from "../../../../src/infra/logger";
 import {
   ProviderTimeoutError,
   ProviderUnavailableError,
   ProviderUnexpectedError,
-} from "../../infra/payment-provider/errors";
-import type { ChargeInput, ChargeResult, PaymentProvider } from "../../infra/payment-provider/payment-provider";
-import { AppError } from "../../shared/errors";
-import { allowedSources } from "../../shared/operation-state-machine";
-import type { ApplyCreditResult, WalletService } from "../wallet/wallet.service";
-import type { CashInOperationRecord, CashInRepository } from "./cash-in.repository";
-import { computeRequestHash } from "./cash-in.request-hash";
-import type { CashInRequest } from "./cash-in.schemas";
-import { createCashInService } from "./cash-in.service";
+} from "../../../../src/infra/payment-provider/errors";
+import type { ChargeInput, ChargeResult, PaymentProvider } from "../../../../src/infra/payment-provider/payment-provider";
+import { AppError } from "../../../../src/shared/errors";
+import { allowedSources } from "../../../../src/shared/operation-state-machine";
+import type { ApplyCreditResult, WalletService } from "../../../../src/features/wallet/wallet.service";
+import type { CashInOperationRecord, CashInRepository } from "../../../../src/features/cash-in/cash-in.repository";
+import { computeRequestHash } from "../../../../src/features/cash-in/cash-in.request-hash";
+import type { CashInRequest } from "../../../../src/features/cash-in/cash-in.schemas";
+import { createCashInService } from "../../../../src/features/cash-in/cash-in.service";
 
 // In-memory doubles live only inside this test. The service itself keeps no state.
 

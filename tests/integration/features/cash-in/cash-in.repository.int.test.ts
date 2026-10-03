@@ -1,18 +1,18 @@
 import crypto from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { loadConfig } from "../../infra/config";
-import { createPrismaClient, type PrismaClient } from "../../infra/prisma";
-import { Prisma } from "../../generated/prisma/client";
+import { loadConfig } from "../../../../src/infra/config";
+import { createPrismaClient, type PrismaClient } from "../../../../src/infra/prisma";
+import { Prisma } from "../../../../src/generated/prisma/client";
 import {
   createCashInRepository,
   newOperationId,
   type CashInRepository,
-} from "./cash-in.repository";
+} from "../../../../src/features/cash-in/cash-in.repository";
 import {
   createOperation,
   createWallet,
   uniqueUserId,
-} from "../../../tests/helpers/factories";
+} from "../../../helpers/factories";
 
 describe("CashInRepository (integration)", () => {
   let prisma: PrismaClient;

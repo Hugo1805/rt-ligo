@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { createApp, type AppDeps } from "../../app";
-import { createLogger } from "../../infra/logger";
-import type { Config } from "../../infra/config";
-import type { PrismaClient } from "../../infra/prisma";
-import type { Redis } from "../../infra/redis";
-import { REQUEST_ID_HEADER } from "../../infra/correlation";
+import { createApp, type AppDeps } from "../../../../src/app";
+import { createLogger } from "../../../../src/infra/logger";
+import type { Config } from "../../../../src/infra/config";
+import type { PrismaClient } from "../../../../src/infra/prisma";
+import type { Redis } from "../../../../src/infra/redis";
+import { REQUEST_ID_HEADER } from "../../../../src/infra/correlation";
 
 const fakeConfig: Config = {
   DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake",

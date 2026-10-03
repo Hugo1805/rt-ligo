@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { webhookEventSchema } from "./webhooks.schemas";
+import { webhookEventSchema } from "../../../../src/features/webhooks/webhooks.schemas";
 
 describe("webhookEventSchema", () => {
   const validEvent = {

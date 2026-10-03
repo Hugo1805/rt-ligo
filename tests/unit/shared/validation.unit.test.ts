@@ -1,19 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { issuesToFieldErrors, validationHook } from "./validation";
+import { issuesToFieldErrors, validationHook } from "../../../src/shared/validation";
 import {
   cashInHeadersSchema,
   createCashInRequestSchema,
   idempotencyHeaderHook,
-} from "../features/cash-in/cash-in.schemas";
-import { errorHandler } from "./error-handler";
+} from "../../../src/features/cash-in/cash-in.schemas";
+import { errorHandler } from "../../../src/shared/error-handler";
 import {
   correlation,
   REQUEST_ID_HEADER,
   type CorrelationEnv,
-} from "../infra/correlation";
-import { createLogger } from "../infra/logger";
+} from "../../../src/infra/correlation";
+import { createLogger } from "../../../src/infra/logger";
 
 function createSilentLogger() {
   const stream = { write() {} };

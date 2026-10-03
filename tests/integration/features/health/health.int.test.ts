@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { createApp } from "../../app";
-import { loadConfig } from "../../infra/config";
-import { createLogger } from "../../infra/logger";
-import { createPrismaClient, type PrismaClient } from "../../infra/prisma";
-import { createRedisClient, type Redis } from "../../infra/redis";
-import { REQUEST_ID_HEADER } from "../../infra/correlation";
+import { createApp } from "../../../../src/app";
+import { loadConfig } from "../../../../src/infra/config";
+import { createLogger } from "../../../../src/infra/logger";
+import { createPrismaClient, type PrismaClient } from "../../../../src/infra/prisma";
+import { createRedisClient, type Redis } from "../../../../src/infra/redis";
+import { REQUEST_ID_HEADER } from "../../../../src/infra/correlation";
 
 describe("GET /health (integration)", () => {
   let prisma: PrismaClient;

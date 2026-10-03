@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { createHmac } from "node:crypto";
-import { createMockPspApp } from "./app";
-import type { MockConfig } from "./config";
+import { createMockPspApp } from "../../../../tools/mock-psp/app";
+import type { MockConfig } from "../../../../tools/mock-psp/config";
 import {
   sendWebhook,
   signPayload,
   type MockWebhookPayload,
   type SendWebhookOptions,
-} from "./webhook-sender";
+} from "../../../../tools/mock-psp/webhook-sender";
 
 const baseConfig: MockConfig = {
   PORT: 3001,

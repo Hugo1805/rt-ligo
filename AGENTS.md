@@ -65,6 +65,8 @@ src/
   server.ts           arranque
 prisma/               schema, migraciones, seed
 tests/
+  unit/               tests unitarios; replican la ruta de src/ y tools/
+  integration/        tests con Postgres y Redis reales; replican la ruta de src/
   e2e/                tests HTTP contra 2 réplicas
   helpers/            factories, firma de webhooks, limpieza de DB
 tools/mock-psp/       proveedor de pagos falso para e2e
@@ -79,8 +81,8 @@ Convención de nombres dentro de una feature, con `cash-in` como ejemplo:
 | `cash-in.schemas.ts` | Schemas zod y tipos con `z.infer`. |
 | `cash-in.service.ts` | Orquestación del caso de uso. |
 | `cash-in.repository.ts` | Acceso a datos con el cliente Prisma. |
-| `cash-in.unit.test.ts` | Tests unitarios, junto al código. |
-| `cash-in.int.test.ts` | Tests de integración, junto al código. |
+| `tests/unit/features/cash-in/cash-in.<rol>.unit.test.ts` | Tests unitarios, fuera de `src/`. |
+| `tests/integration/features/cash-in/cash-in.<rol>.int.test.ts` | Tests de integración, fuera de `src/`. |
 
 Reglas de dependencia:
 - Una feature puede importar de `shared/` e `infra/`.
@@ -131,11 +133,12 @@ Reglas de dependencia:
 
 | Nivel | Ubicación | Dependencias | Comando |
 |---|---|---|---|
-| Unitario | `src/**/*.unit.test.ts` | Ninguna | `bun run test:unit` |
-| Integración | `src/**/*.int.test.ts` | Postgres y Redis de Docker Compose | `bun run test:int` |
+| Unitario | `tests/unit/**/*.unit.test.ts` | Ninguna | `bun run test:unit` |
+| Integración | `tests/integration/**/*.int.test.ts` | Postgres y Redis de Docker Compose | `bun run test:int` |
 | E2E | `tests/e2e/*.e2e.test.ts` | Perfil `e2e` de Docker Compose | `bun run test:e2e` |
 
 - Importa siempre desde `bun:test`. Jest no se usa.
+- Ningún test vive en `src/`. Cada test replica en `tests/unit/` o `tests/integration/` la ruta del código que prueba: `src/shared/retry.ts` se prueba en `tests/unit/shared/retry.unit.test.ts`.
 - La idempotencia y la concurrencia se prueban en integración o e2e con Postgres y Redis reales, nunca solo con dobles en memoria.
 - Un test de concurrencia lanza los requests con `Promise.all` desde instancias separadas del servicio, cada una con su propio cliente Prisma y Redis.
 - Cada test deja la DB limpia o usa datos únicos.

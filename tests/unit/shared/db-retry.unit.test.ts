@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { Prisma } from "../generated/prisma/client";
-import { AppError } from "./errors";
+import { Prisma } from "../../../src/generated/prisma/client";
+import { AppError } from "../../../src/shared/errors";
 import {
   isTransientDbError,
   withDbRetry,
   TRANSIENT_DB_ERROR_CODES,
   type DbRetryLogger,
-} from "./db-retry";
+} from "../../../src/shared/db-retry";
 
 describe("isTransientDbError", () => {
   test("recognizes all 6 transient codes on PrismaClientKnownRequestError", () => {

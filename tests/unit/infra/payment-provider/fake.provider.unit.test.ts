@@ -3,9 +3,9 @@ import {
   ProviderTimeoutError,
   ProviderUnavailableError,
   ProviderUnexpectedError,
-} from "./errors";
-import { FakePaymentProvider } from "./fake.provider";
-import type { ChargeInput, ChargeResult, GetChargeResult } from "./payment-provider";
+} from "../../../../src/infra/payment-provider/errors";
+import { FakePaymentProvider } from "../../../../src/infra/payment-provider/fake.provider";
+import type { ChargeInput, ChargeResult, GetChargeResult } from "../../../../src/infra/payment-provider/payment-provider";
 
 describe("FakePaymentProvider", () => {
   let provider: FakePaymentProvider;

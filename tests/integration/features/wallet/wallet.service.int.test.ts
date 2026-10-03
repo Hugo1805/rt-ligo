@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { Prisma } from "../../generated/prisma/client";
-import { loadConfig } from "../../infra/config";
-import { createPrismaClient, type PrismaClient } from "../../infra/prisma";
-import { createOperation, createWallet, uniqueUserId } from "../../../tests/helpers/factories";
-import { createWalletService, type WalletService } from "./wallet.service";
+import { Prisma } from "../../../../src/generated/prisma/client";
+import { loadConfig } from "../../../../src/infra/config";
+import { createPrismaClient, type PrismaClient } from "../../../../src/infra/prisma";
+import { createOperation, createWallet, uniqueUserId } from "../../../helpers/factories";
+import { createWalletService, type WalletService } from "../../../../src/features/wallet/wallet.service";
 
 // providerChargeId is @unique and test data persists, so every charge id is fresh.
 const chargeId = (label: string) => `ch_${label}_${crypto.randomUUID().replaceAll("-", "")}`;

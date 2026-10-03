@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { Writable } from "node:stream";
-import { Prisma } from "../../generated/prisma/client";
-import type { OperationStatus } from "../../generated/prisma/enums";
-import { createLogger } from "../../infra/logger";
-import type { PrismaClient } from "../../infra/prisma";
-import { withDbRetry } from "../../shared/db-retry";
-import type { ApplyCreditInput, ApplyCreditResult } from "../wallet/wallet.service";
-import type { WebhookOperation, WebhookOutcome, WebhooksRepository } from "./webhooks.repository";
-import type { WebhookEvent } from "./webhooks.schemas";
-import { createWebhooksService } from "./webhooks.service";
+import { Prisma } from "../../../../src/generated/prisma/client";
+import type { OperationStatus } from "../../../../src/generated/prisma/enums";
+import { createLogger } from "../../../../src/infra/logger";
+import type { PrismaClient } from "../../../../src/infra/prisma";
+import { withDbRetry } from "../../../../src/shared/db-retry";
+import type { ApplyCreditInput, ApplyCreditResult } from "../../../../src/features/wallet/wallet.service";
+import type { WebhookOperation, WebhookOutcome, WebhooksRepository } from "../../../../src/features/webhooks/webhooks.repository";
+import type { WebhookEvent } from "../../../../src/features/webhooks/webhooks.schemas";
+import { createWebhooksService } from "../../../../src/features/webhooks/webhooks.service";
 
 type EventKind = "succeeded" | "failed" | "pending";
 

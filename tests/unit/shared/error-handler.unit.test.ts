@@ -6,19 +6,19 @@ import {
   AppError,
   type ErrorCode,
   type FieldError,
-} from "./errors";
+} from "../../../src/shared/errors";
 import {
   errorHandler,
   notFoundHandler,
   toProblem,
   type ProblemDetails,
-} from "./error-handler";
+} from "../../../src/shared/error-handler";
 import {
   correlation,
   REQUEST_ID_HEADER,
   type CorrelationEnv,
-} from "../infra/correlation";
-import { createLogger } from "../infra/logger";
+} from "../../../src/infra/correlation";
+import { createLogger } from "../../../src/infra/logger";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { Hono } from "hono";
-import { createMockPspApp } from "../../../tools/mock-psp/app";
-import type { MockConfig } from "../../../tools/mock-psp/config";
-import { verifyWebhookSignature } from "../../features/webhooks/webhooks.signature";
+import { createMockPspApp } from "../../../../tools/mock-psp/app";
+import type { MockConfig } from "../../../../tools/mock-psp/config";
+import { verifyWebhookSignature } from "../../../../src/features/webhooks/webhooks.signature";
 import {
   ProviderTimeoutError,
   ProviderUnavailableError,
   ProviderUnexpectedError,
-} from "./errors";
-import { HttpPaymentProvider } from "./http.provider";
+} from "../../../../src/infra/payment-provider/errors";
+import { HttpPaymentProvider } from "../../../../src/infra/payment-provider/http.provider";
 
 describe("HttpPaymentProvider (unit)", () => {
   const activeServers: Array<{ stop: (closeActive?: boolean) => void | Promise<void> }> = [];

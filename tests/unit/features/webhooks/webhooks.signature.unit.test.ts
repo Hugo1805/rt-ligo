@@ -3,7 +3,7 @@ import {
   parseSignatureHeader,
   signWebhookPayload,
   verifyWebhookSignature,
-} from "./webhooks.signature";
+} from "../../../../src/features/webhooks/webhooks.signature";
 
 describe("webhooks.signature", () => {
   const secret = "whsec_test_secret_1234567890";

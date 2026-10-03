@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { loadConfig } from "./config";
-import { createLogger } from "./logger";
-import { createRedisClient, type Redis } from "./redis";
-import { createRedisLock, type Lock } from "./lock";
+import { loadConfig } from "../../../src/infra/config";
+import { createLogger } from "../../../src/infra/logger";
+import { createRedisClient, type Redis } from "../../../src/infra/redis";
+import { createRedisLock, type Lock } from "../../../src/infra/lock";
 
 describe("Redis Lock (integration)", () => {
   let redis: Redis;

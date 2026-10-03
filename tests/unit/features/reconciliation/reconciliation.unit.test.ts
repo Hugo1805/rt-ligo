@@ -1,26 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { Prisma } from "../../generated/prisma/client";
-import type { OperationStatus } from "../../generated/prisma/enums";
-import { createLogger } from "../../infra/logger";
+import { Prisma } from "../../../../src/generated/prisma/client";
+import type { OperationStatus } from "../../../../src/generated/prisma/enums";
+import { createLogger } from "../../../../src/infra/logger";
 import {
   ProviderTimeoutError,
   ProviderUnavailableError,
   ProviderUnexpectedError,
-} from "../../infra/payment-provider/errors";
+} from "../../../../src/infra/payment-provider/errors";
 import type {
   ChargeInput,
   ChargeResult,
   GetChargeResult,
   PaymentProvider,
-} from "../../infra/payment-provider/payment-provider";
-import type { PrismaClient } from "../../infra/prisma";
-import type { ApplyCreditInput, ApplyCreditResult } from "../wallet/wallet.service";
+} from "../../../../src/infra/payment-provider/payment-provider";
+import type { PrismaClient } from "../../../../src/infra/prisma";
+import type { ApplyCreditInput, ApplyCreditResult } from "../../../../src/features/wallet/wallet.service";
 import type {
   ClaimLeaseInput,
   ReconcileOperation,
   ReconciliationRepository,
-} from "./reconciliation.repository";
-import { createReconciler, LEASE_DURATION_MS, type ReconcilerConfig } from "./reconciliation.service";
+} from "../../../../src/features/reconciliation/reconciliation.repository";
+import { createReconciler, LEASE_DURATION_MS, type ReconcilerConfig } from "../../../../src/features/reconciliation/reconciliation.service";
 
 const CONFIG: ReconcilerConfig = {
   RECONCILE_INTERVAL_MS: 5,

@@ -3,7 +3,7 @@ import {
   idempotencyKeySchema,
   cashInHeadersSchema,
   createCashInRequestSchema,
-} from "./cash-in.schemas";
+} from "../../../../src/features/cash-in/cash-in.schemas";
 
 describe("idempotencyKeySchema", () => {
   test("accepts a valid v4 UUID", () => {
