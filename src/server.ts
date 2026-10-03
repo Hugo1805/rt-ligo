@@ -3,6 +3,9 @@ import { createLogger } from "./infra/logger";
 import { createPrismaClient } from "./infra/prisma";
 import { createRedisClient } from "./infra/redis";
 import { createApp } from "./app";
+import { FakePaymentProvider } from "./infra/payment-provider/fake.provider";
+import { HttpPaymentProvider } from "./infra/payment-provider/http.provider";
+import type { PaymentProvider } from "./infra/payment-provider/payment-provider";
 
 const config = loadConfig();
 const logger = createLogger({
@@ -12,6 +15,15 @@ const logger = createLogger({
 
 const prisma = createPrismaClient(config.DATABASE_URL);
 const redis = createRedisClient(config.REDIS_URL);
+
+export const paymentProvider: PaymentProvider =
+  config.PROVIDER_MODE === "http"
+    ? new HttpPaymentProvider(
+        config.PROVIDER_BASE_URL!,
+        config.PROVIDER_TIMEOUT_MS,
+        logger
+      )
+    : new FakePaymentProvider();
 
 const app = createApp({
   config,
