@@ -35,7 +35,7 @@
 
 ## Fase 4 · Cash-in
 
-- [ ] 4.1 `src/infra/payment-provider/` con el puerto y `FakePaymentProvider` idempotente por referencia. Test unitario. — R5.2
+- [x] 4.1 `src/infra/payment-provider/` con el puerto y `FakePaymentProvider` idempotente por referencia. Test unitario. — R5.2
 - [ ] 4.2 `src/infra/lock.ts` con `ownerId`, liberación con Lua y fallback si Redis falla. Test de integración. — R3, R4.3, R4.4
 - [ ] 4.3 `cash-in.repository.ts`: create con `P2002`, `findByKey` y CAS con `updateMany`. — R2, R7.4
 - [ ] 4.4 `withDbRetry` en `src/shared/` para errores transitorios de Prisma. — R11
