@@ -125,3 +125,9 @@
 - **Propuesta del agente:** Gemini validó la config con un `.refine` a nivel de objeto para exigir `PROVIDER_BASE_URL` en modo `http`, y `PROVIDER_MAX_RETRIES` con `.positive()`. Sus tests pasaban porque probaban cada error por separado.
 - **Detectado por:** Claude Code, probando combinaciones de errores fuera de los tests del agente.
 - **Resultado:** en zod 4 el refinamiento no corre si otro campo falla, así que el error no listaba todas las variables. Se agregó `when: () => true`. `PROVIDER_MAX_RETRIES` pasó a `.nonnegative()` para admitir `0`. Se sumaron dos tests.
+
+### 17. T2.6: base de datos inalcanzable cuelga el request 75 segundos
+
+- **Propuesta del agente:** Antigravity, lanzado con `agy -p` desde Claude Code, hizo un health check correcto y sin `$queryRaw`, con Redis configurado para fallar rápido. Sus tests usaban dobles que fallan al instante y un Postgres real sano, y reportó el `grep` de `queryRaw` como limpio cuando en realidad encuentra coincidencias en el cliente generado.
+- **Detectado por:** Claude Code, probando `/health` contra un puerto cerrado y contra una IP que no responde, para Postgres y para Redis.
+- **Resultado:** el puerto cerrado fallaba rápido, pero con la IP que no responde el request tardaba 75 s, porque `pg` no tiene timeout de conexión. Se agregó `connectionTimeoutMillis` en `createPrismaClient` y ahora responde 503 en 2 s. También se agregó `await server.stop()` en el apagado y se corrigió el `grep` del plan. Lección: un doble que falla al instante no prueba el caso de red que no responde, que es el más común en producción.

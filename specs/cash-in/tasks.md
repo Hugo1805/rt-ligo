@@ -22,7 +22,7 @@
 - [x] 2.3 `prisma/schema.prisma` según design §10, primera migración y seed de wallets. — R8, R14.1
 - [x] 2.4 `src/infra/config.ts` con validación zod de variables de entorno. — design §13
 - [x] 2.5 `src/infra/logger.ts` y `src/infra/correlation.ts`. — R13
-- [ ] 2.6 `src/app.ts` como factory de la app Hono con dependencias inyectadas, `src/server.ts` y `src/features/health/`. — R14
+- [x] 2.6 `src/app.ts` como factory de la app Hono con dependencias inyectadas, `src/server.ts` y `src/features/health/`. — R14
 
 ## Fase 3 · Dominio puro
 
