@@ -113,3 +113,9 @@
 - **Propuesta del agente:** Gemini entregó T2.2 correcta, pero de nuevo hizo el commit y marcó el plan como `done` sin pasar por revisión, igual que en T2.1.
 - **Detectado por:** Claude Code, al revisar la rama `chore/T2.2-docker-compose`. Al buscar la causa, encontró que `AGENTS.md` ordenaba "Haz un commit por tarea" y marcar `done`, mientras el README de plans decía "No hagas commit". El agente seguía la regla de mayor jerarquía.
 - **Resultado:** `AGENTS.md` ahora dice que el ejecutor deja el plan en `review` sin commitear, y que quien revisa marca `tasks.md`, pasa a `done` y commitea. Lección: si el agente repite un error, revisar primero las instrucciones antes de culpar al agente.
+
+### 15. T2.3: fallback silencioso a la base de dev
+
+- **Propuesta del agente:** Gemini escribió el schema exacto y la config de Prisma 7 correcta, gracias a las trampas del plan. Pero en `prisma.config.ts` y `seed.ts` puso `process.env.DATABASE_URL ?? "postgresql://...localhost:5432/cashin"`. No había `.env`, y la verificación pasó solo por ese fallback.
+- **Detectado por:** Claude Code, al notar que la verificación pasaba sin `.env`.
+- **Resultado:** se cambió a `env("DATABASE_URL")`, que falla si falta la variable. Un default en la URL de la base convierte un error de configuración en escrituras sobre la base equivocada, por ejemplo tests de integración limpiando la base de dev.

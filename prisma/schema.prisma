@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OperationStatus {
+  PENDING
+  PROCESSING
+  UNKNOWN
+  COMPLETED
+  FAILED
+}
+
+enum LedgerEntryType {
+  CREDIT
+}
+
+model Wallet {
+  id        String        @id @default(uuid())
+  userId    String        @unique
+  currency  String        @db.Char(3)
+  balance   Decimal       @db.Decimal(18, 2) @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  entries   LedgerEntry[]
+}
+
+model CashInOperation {
+  id                String          @id
+  userId            String
+  idempotencyKey    String          @db.Uuid
+  requestHash       String          @db.Char(64)
+  amount            Decimal         @db.Decimal(18, 2)
+  currency          String          @db.Char(3)
+  paymentMethod     String
+  status            OperationStatus @default(PENDING)
+  providerChargeId  String?         @unique
+  failureCode       String?
+  lastError         String?
+  reconcileAttempts Int             @default(0)
+  leaseOwner        String?
+  leaseUntil        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  completedAt       DateTime?
+  ledgerEntry       LedgerEntry?
+  webhookEvents     WebhookEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([status, updatedAt])
+}
+
+model LedgerEntry {
+  id           String          @id @default(uuid())
+  walletId     String
+  operationId  String          @unique
+  type         LedgerEntryType
+  amount       Decimal         @db.Decimal(18, 2)
+  balanceAfter Decimal         @db.Decimal(18, 2)
+  createdAt    DateTime        @default(now())
+  wallet       Wallet          @relation(fields: [walletId], references: [id])
+  operation    CashInOperation @relation(fields: [operationId], references: [id])
+}
+
+model WebhookEvent {
+  id              String           @id @default(uuid())
+  providerEventId String           @unique
+  type            String
+  operationId     String?
+  payload         Json
+  outcome         String?
+  receivedAt      DateTime         @default(now())
+  processedAt     DateTime?
+  operation       CashInOperation? @relation(fields: [operationId], references: [id])
+}
