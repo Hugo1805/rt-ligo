@@ -315,13 +315,14 @@ const { count } = await prisma.cashInOperation.updateMany({
   where: {
     id,
     status: { in: ["PENDING", "PROCESSING", "UNKNOWN"] },
+    reconcileAttempts: { lt: RECONCILE_MAX_ATTEMPTS },
     OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }],
   },
   data: { leaseOwner: podId, leaseUntil: addSeconds(now, 60), reconcileAttempts: { increment: 1 } },
 });
 ```
 
-3. Solo el pod con `count = 1` la procesa.
+3. Solo el pod con `count = 1` la procesa. El filtro de `reconcileAttempts` se repite en el claim porque la lista de candidatos puede estar vieja: otro pod pudo gastar el último intento y liberar el lease entretanto.
 4. Si la operación está `PENDING`, el cobro nunca salió: la pasa a `PROCESSING` con CAS y envía `charge` con la misma referencia. Así se completa la intención del usuario tras una caída entre el `create` y el envío.
 5. Si está `PROCESSING` o `UNKNOWN`, llama `getCharge(reference)`:
    - `succeeded`: `applyCredit`.

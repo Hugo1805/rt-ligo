@@ -152,3 +152,9 @@
 - **Propuesta del plan:** el plan de T4.3, escrito por Claude Code antes del código, pedía un test donde `PROCESSING→FAILED` y `PROCESSING→UNKNOWN` concurrentes daban un solo ganador.
 - **Detectado por:** Antigravity. Notó que `UNKNOWN→FAILED` es válida en R7.2, así que si `UNKNOWN` gana primero las dos transiciones devuelven `true`. Se detuvo y propuso un CAS concurrente al mismo destino, en vez de debilitar la aserción.
 - **Resultado:** Claude Code confirmó la contradicción y reemplazó el test por 10 CAS concurrentes `PROCESSING→UNKNOWN` desde 3 clientes y un test de orden entre `FAILED` y `UNKNOWN`. La regla de AGENTS.md de detenerse ante una contradicción funcionó en la dirección inversa: el agente corrigió al planificador.
+
+### 21. T4.5, T4.6, T5.1 y T6.1: subagentes de Claude Code y un hueco del spec
+
+- **Propuesta:** las cuatro tareas que los planes asignan a Claude Code (el núcleo de idempotencia) se hicieron en paralelo: T4.5 y T4.6 por la sesión principal, T5.1 y T6.1 por dos subagentes en worktrees propios, con el mismo protocolo que Antigravity (sin commit, reporte de desvíos).
+- **Detectado por:** el subagente de T6.1, al correr dos reconciliadores reales sobre clientes Prisma separados. El claim del lease de design §7 no filtraba `reconcileAttempts`: un pod con una lista vieja reclamaba una operación ya agotada por otro, contra R10.6.
+- **Resultado:** filtro agregado al `claimLease` y a design §7. En T4.5, Claude Code se desvió del plan para releer la operación tras un CAS perdido, porque el `from` leído antes del CAS era viejo. T4.5 y T4.6 se verificaron con pruebas de mutación: cambiar `increment` por leer y escribir rompe el test de 50 abonos concurrentes, y reintentar timeouts o marcar `FAILED` sin certeza rompe los tests del servicio.

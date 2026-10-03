@@ -3,6 +3,8 @@ import { createLogger } from "./infra/logger";
 import { createPrismaClient } from "./infra/prisma";
 import { createRedisClient } from "./infra/redis";
 import { createApp } from "./app";
+import { createReconciler } from "./features/reconciliation/reconciliation.service";
+import { createWalletService } from "./features/wallet/wallet.service";
 import { FakePaymentProvider } from "./infra/payment-provider/fake.provider";
 import { HttpPaymentProvider } from "./infra/payment-provider/http.provider";
 import type { PaymentProvider } from "./infra/payment-provider/payment-provider";
@@ -39,6 +41,18 @@ export const server = Bun.serve({
 
 logger.info({ port: config.PORT }, `Server started on port ${config.PORT}`);
 
+// Reconciler: runs in every pod, coordinated only through the lease in PostgreSQL.
+const walletService = createWalletService({ prisma });
+const reconciler = createReconciler({
+  prisma,
+  paymentProvider,
+  applyCredit: walletService.applyCredit,
+  logger,
+  config,
+  podId: config.POD_ID,
+});
+reconciler.start();
+
 let isShuttingDown = false;
 
 export async function shutdown(signal: string = "SIGTERM"): Promise<void> {
@@ -52,6 +66,13 @@ export async function shutdown(signal: string = "SIGTERM"): Promise<void> {
     await server.stop();
   } catch (err) {
     logger.error({ err }, "Error stopping server");
+  }
+
+  try {
+    // Wait for the cycle in progress so it never writes to a disconnected Prisma.
+    await reconciler.stop();
+  } catch (err) {
+    logger.error({ err }, "Error stopping reconciler");
   }
 
   try {

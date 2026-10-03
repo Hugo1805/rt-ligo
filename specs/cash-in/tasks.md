@@ -52,7 +52,7 @@
 
 ## Fase 6 · Reconciliador
 
-- [ ] 6.1 `src/features/reconciliation/reconciliation.service.ts` con lease vía `updateMany`. — R10
+- [x] 6.1 `src/features/reconciliation/reconciliation.service.ts` con lease vía `updateMany`. — R10
 - [ ] 6.2 `reconciliation.int.test.ts` con dos reconciliadores concurrentes y caso `not_found`. — R10.4, R10.5
 
 ## Fase 7 · E2E
