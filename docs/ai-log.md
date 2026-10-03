@@ -131,3 +131,12 @@
 - **Propuesta del agente:** Antigravity, lanzado con `agy -p` desde Claude Code, hizo un health check correcto y sin `$queryRaw`, con Redis configurado para fallar rápido. Sus tests usaban dobles que fallan al instante y un Postgres real sano, y reportó el `grep` de `queryRaw` como limpio cuando en realidad encuentra coincidencias en el cliente generado.
 - **Detectado por:** Claude Code, probando `/health` contra un puerto cerrado y contra una IP que no responde, para Postgres y para Redis.
 - **Resultado:** el puerto cerrado fallaba rápido, pero con la IP que no responde el request tardaba 75 s, porque `pg` no tiene timeout de conexión. Se agregó `connectionTimeoutMillis` en `createPrismaClient` y ahora responde 503 en 2 s. También se agregó `await server.stop()` en el apagado y se corrigió el `grep` del plan. Lección: un doble que falla al instante no prueba el caso de red que no responde, que es el más común en producción.
+
+### 18. Fase 3 en paralelo: ocho agentes en worktrees
+
+- **Propuesta del agente:** Claude Code lanzó ocho Antigravity con `agy -p` a la vez (T3.1 a T3.5, T4.1, T4.2 y T8.1), cada uno en su propio worktree y rama, con prohibición de commitear o editar `tasks.md` y `ai-log.md`. La primera prueba con `--add-dir` dejaba la terminal del agente en el repo principal, así que se descartó y cada agente se lanzó desde su worktree.
+- **Detectado por:** Claude Code, en la revisión de cada rama.
+- **Resultado:** cinco ramas sin correcciones (T3.2, T3.3, T3.4, T3.5 y T4.2), verificadas por fuera: vectores HMAC y SHA-256 recalculados con `openssl` y `shasum`, y el lock probado contra una IP que no responde. Tres con correcciones:
+  - T3.1: la tabla de transiciones exportada era `readonly` solo en tipos; se congeló con `Object.freeze`.
+  - T4.1: errores con un constructor ambiguo para `cause`, y el fake devolvía el objeto guardado, mutable desde afuera.
+  - T8.1: la clave de RDS con `#`, `?` y `%` se interpolaba sin codificar en `DATABASE_URL`, que habría impedido conectar en el primer deploy.

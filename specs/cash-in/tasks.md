@@ -63,7 +63,7 @@
 
 ## Fase 8 · Terraform
 
-- [ ] 8.1 `infra/terraform/` con red, ALB, ECS, RDS, ElastiCache, Secrets Manager y CloudWatch. — R14.3
+- [x] 8.1 `infra/terraform/` con red, ALB, ECS, RDS, ElastiCache, Secrets Manager y CloudWatch. — R14.3
 - [ ] 8.2 `terraform fmt -check` y `terraform validate`.
 
 ## Fase 9 · Documentación

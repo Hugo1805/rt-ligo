@@ -1,0 +1,48 @@
+# General
+aws_region  = "us-east-1"
+environment = "production"
+app_name    = "wallet-cash-in"
+
+# Network
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+single_nat_gateway   = true
+
+# Application & ECS
+container_image     = "123456789012.dkr.ecr.us-east-1.amazonaws.com/wallet-cash-in:latest"
+container_port      = 3000
+app_desired_count   = 2
+ecs_cpu             = 256
+ecs_memory          = 512
+acm_certificate_arn = ""
+log_retention_days  = 30
+
+# Runtime application configuration (design §13)
+provider_mode          = "fake"
+provider_base_url      = ""
+provider_timeout_ms    = 3000
+provider_max_retries   = 2
+lock_ttl_ms            = 15000
+cash_in_max_amount     = 10000
+reconcile_interval_ms  = 10000
+reconcile_stale_ms     = 30000
+reconcile_max_attempts = 5
+webhook_tolerance_s    = 300
+log_level              = "info"
+
+# RDS PostgreSQL
+db_instance_class      = "db.t4g.micro"
+db_allocated_storage   = 20
+db_name                = "wallet_cash_in"
+db_username            = "dbadmin"
+db_multi_az            = false
+db_deletion_protection = false
+db_skip_final_snapshot = true
+postgres_version       = "16.4"
+
+# ElastiCache Redis
+redis_node_type          = "cache.t4g.micro"
+redis_num_cache_clusters = 2
+redis_version            = "7.1"
