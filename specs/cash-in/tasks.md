@@ -26,7 +26,7 @@
 
 ## Fase 3 · Dominio puro
 
-- [ ] 3.1 `src/shared/operation-state-machine.ts` con `canTransition` y `allowedSources`. Test unitario. — R7
+- [x] 3.1 `src/shared/operation-state-machine.ts` con `canTransition` y `allowedSources`. Test unitario. — R7
 - [ ] 3.2 `src/shared/errors.ts` con `AppError` y el catálogo, y `src/shared/error-handler.ts`. Test unitario. — R12
 - [ ] 3.3 `src/features/cash-in/cash-in.request-hash.ts`. Test unitario. — R2.4, R2.5
 - [ ] 3.4 `src/shared/retry.ts` con backoff y jitter. Test unitario. — R6.3
