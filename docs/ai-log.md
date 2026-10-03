@@ -102,4 +102,8 @@
 
 ## Correcciones durante la implementación
 
-_Pendiente. Se completa a medida que avanza `tasks.md`._
+### 13. T2.1: driver adapter de Prisma 7 omitido
+
+- **Propuesta del agente:** Gemini instaló Prisma 7.10 sin `@prisma/adapter-pg`, aunque el plan pedía seguir la guía de la versión instalada. Además, `test:int` y `test:e2e` fallaban con código 1 mientras no hubiera tests, y el ejecutor hizo el commit él mismo.
+- **Detectado por:** Claude Code, al revisar la rama `chore/T2.1-project-setup`.
+- **Resultado:** se agregó `@prisma/adapter-pg` y `--pass-with-no-tests`. El plan de T2.3 suma las trampas de Prisma 7: generador `prisma-client` con `output`, URL en `prisma.config.ts`, cliente construido con el adapter y seed que ya no corre solo.

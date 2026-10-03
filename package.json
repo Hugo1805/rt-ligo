@@ -1,0 +1,32 @@
+{
+  "name": "rt-ligo",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "bun test .unit.test",
+    "test:int": "bun test --pass-with-no-tests .int.test",
+    "test:e2e": "bun test --pass-with-no-tests .e2e.test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "bun prisma/seed.ts"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "hono": "^4.13.12",
+    "ioredis": "^6.0.0",
+    "pino": "^10.4.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "prisma": "^7.10.0",
+    "typescript": "^7.0.2"
+  }
+}

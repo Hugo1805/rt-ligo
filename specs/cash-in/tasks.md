@@ -17,7 +17,7 @@
 
 ## Fase 2 · Base
 
-- [ ] 2.1 `package.json` con Bun, Hono, Prisma, ioredis, pino, zod y `@hono/zod-validator`. Scripts `dev`, `typecheck`, `test:unit`, `test:int`, `test:e2e`, `db:seed`. `tsconfig.json` estricto. — R14
+- [x] 2.1 `package.json` con Bun, Hono, Prisma, ioredis, pino, zod y `@hono/zod-validator`. Scripts `dev`, `typecheck`, `test:unit`, `test:int`, `test:e2e`, `db:seed`. `tsconfig.json` estricto. — R14
 - [ ] 2.2 `docker-compose.yml` con `postgres` y `redis`, y `.env.example`. — R14.3
 - [ ] 2.3 `prisma/schema.prisma` según design §10, primera migración y seed de wallets. — R8, R14.1
 - [ ] 2.4 `src/infra/config.ts` con validación zod de variables de entorno. — design §13
