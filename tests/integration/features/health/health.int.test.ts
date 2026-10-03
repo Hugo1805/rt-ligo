@@ -5,6 +5,8 @@ import { createLogger } from "../../../../src/infra/logger";
 import { createPrismaClient, type PrismaClient } from "../../../../src/infra/prisma";
 import { createRedisClient, type Redis } from "../../../../src/infra/redis";
 import { REQUEST_ID_HEADER } from "../../../../src/infra/correlation";
+import { createRedisLock } from "../../../../src/infra/lock";
+import { FakePaymentProvider } from "../../../../src/infra/payment-provider/fake.provider";
 
 describe("GET /health (integration)", () => {
   let prisma: PrismaClient;
@@ -32,6 +34,8 @@ describe("GET /health (integration)", () => {
       logger,
       prisma,
       redis,
+      paymentProvider: new FakePaymentProvider(),
+      lock: createRedisLock(redis),
     });
 
     const res = await app.request("/health");
@@ -64,6 +68,8 @@ describe("GET /health (integration)", () => {
       logger: createLogger({ level: "silent", podId: "pod-1" }),
       prisma: prisma1,
       redis: redis1,
+      paymentProvider: new FakePaymentProvider(),
+      lock: createRedisLock(redis1),
     });
 
     const prisma2 = createPrismaClient(config.DATABASE_URL);
@@ -73,6 +79,8 @@ describe("GET /health (integration)", () => {
       logger: createLogger({ level: "silent", podId: "pod-2" }),
       prisma: prisma2,
       redis: redis2,
+      paymentProvider: new FakePaymentProvider(),
+      lock: createRedisLock(redis2),
     });
 
     try {

@@ -2,6 +2,7 @@ import { loadConfig } from "./infra/config";
 import { createLogger } from "./infra/logger";
 import { createPrismaClient } from "./infra/prisma";
 import { createRedisClient } from "./infra/redis";
+import { createRedisLock } from "./infra/lock";
 import { createApp } from "./app";
 import { createReconciler } from "./features/reconciliation/reconciliation.service";
 import { createWalletService } from "./features/wallet/wallet.service";
@@ -17,6 +18,7 @@ const logger = createLogger({
 
 const prisma = createPrismaClient(config.DATABASE_URL);
 const redis = createRedisClient(config.REDIS_URL);
+const lock = createRedisLock(redis);
 
 export const paymentProvider: PaymentProvider =
   config.PROVIDER_MODE === "http"
@@ -32,6 +34,8 @@ const app = createApp({
   logger,
   prisma,
   redis,
+  paymentProvider,
+  lock,
 });
 
 export const server = Bun.serve({

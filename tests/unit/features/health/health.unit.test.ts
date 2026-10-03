@@ -4,6 +4,8 @@ import { createLogger } from "../../../../src/infra/logger";
 import type { Config } from "../../../../src/infra/config";
 import type { PrismaClient } from "../../../../src/infra/prisma";
 import type { Redis } from "../../../../src/infra/redis";
+import type { Lock } from "../../../../src/infra/lock";
+import type { PaymentProvider } from "../../../../src/infra/payment-provider/payment-provider";
 import { REQUEST_ID_HEADER } from "../../../../src/infra/correlation";
 
 const fakeConfig: Config = {
@@ -56,11 +58,25 @@ function createFakeDeps(
 
   const logger = createLogger({ level: "silent", podId: fakeConfig.POD_ID });
 
+  const fakePaymentProvider: PaymentProvider = {
+    charge: async () => ({ status: "succeeded", chargeId: "ch_test" }),
+    getCharge: async () => ({ status: "not_found" }),
+  };
+
+  const fakeLock: Lock = {
+    acquire: async () => ({
+      status: "acquired",
+      release: async () => {},
+    }),
+  };
+
   return {
     config: fakeConfig,
     logger,
     prisma: fakePrisma,
     redis: fakeRedis,
+    paymentProvider: fakePaymentProvider,
+    lock: fakeLock,
   };
 }
 
