@@ -106,3 +106,33 @@ export async function createOperation(
     },
   });
 }
+
+export interface CreateLedgerEntryOverrides {
+  walletId: string;
+  operationId: string;
+  type?: "CREDIT";
+  amount?: Prisma.Decimal | string | number;
+  balanceAfter?: Prisma.Decimal | string | number;
+}
+
+export async function createLedgerEntry(
+  prisma: DbClient,
+  overrides: CreateLedgerEntryOverrides
+) {
+  return prisma.ledgerEntry.create({
+    data: {
+      walletId: overrides.walletId,
+      operationId: overrides.operationId,
+      type: overrides.type ?? "CREDIT",
+      amount:
+        overrides.amount instanceof Prisma.Decimal
+          ? overrides.amount
+          : new Prisma.Decimal(overrides.amount ?? "100.00"),
+      balanceAfter:
+        overrides.balanceAfter instanceof Prisma.Decimal
+          ? overrides.balanceAfter
+          : new Prisma.Decimal(overrides.balanceAfter ?? "100.00"),
+    },
+  });
+}
+
