@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "bun prisma/seed.ts"
+    "db:seed": "bun prisma/seed.ts",
+    "infra:check": "terraform -chdir=infra/terraform fmt -check -recursive && terraform -chdir=infra/terraform init -backend=false -input=false && terraform -chdir=infra/terraform validate"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.9.1",
