@@ -158,3 +158,9 @@
 - **Propuesta:** las cuatro tareas que los planes asignan a Claude Code (el núcleo de idempotencia) se hicieron en paralelo: T4.5 y T4.6 por la sesión principal, T5.1 y T6.1 por dos subagentes en worktrees propios, con el mismo protocolo que Antigravity (sin commit, reporte de desvíos).
 - **Detectado por:** el subagente de T6.1, al correr dos reconciliadores reales sobre clientes Prisma separados. El claim del lease de design §7 no filtraba `reconcileAttempts`: un pod con una lista vieja reclamaba una operación ya agotada por otro, contra R10.6.
 - **Resultado:** filtro agregado al `claimLease` y a design §7. En T4.5, Claude Code se desvió del plan para releer la operación tras un CAS perdido, porque el `from` leído antes del CAS era viejo. T4.5 y T4.6 se verificaron con pruebas de mutación: cambiar `increment` por leer y escribir rompe el test de 50 abonos concurrentes, y reintentar timeouts o marcar `FAILED` sin certeza rompe los tests del servicio.
+
+### 22. T4.8: mutaciones para probar cada capa de idempotencia
+
+- **Propuesta del agente:** Antigravity escribió 18 escenarios HTTP de integración con 3 pods simulados, incluidos 20 requests concurrentes con la misma key, 60 keys distintas del mismo usuario y Redis caído. Todos en verde.
+- **Detectado por:** Claude Code, que no aceptó el verde sin probar que los tests detectan el bug que dicen cubrir. Una primera mutación (tratar el duplicado del `create` como propio) sobrevivió.
+- **Resultado:** no era un test débil sino defensa en profundidad: el CAS `PENDING→PROCESSING` frenaba el segundo cobro. Al quitar también ese CAS, con Redis arriba los tests seguían pasando por el lock, y con Redis caído el escenario 13 detectó el segundo `charge`. Queda demostrado con evidencia que Redis optimiza y PostgreSQL garantiza.
