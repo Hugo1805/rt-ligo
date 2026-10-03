@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma/client";
+import { Prisma, PrismaClient } from "../generated/prisma/client";
 
 // pg waits forever for a connection by default, so an unreachable database
 // would hang each request until the OS TCP timeout instead of failing fast.
@@ -13,4 +13,5 @@ export function createPrismaClient(databaseUrl: string): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
+export type DbClient = PrismaClient | Prisma.TransactionClient;
 export type { PrismaClient } from "../generated/prisma/client";

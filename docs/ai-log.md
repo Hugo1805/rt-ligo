@@ -146,3 +146,9 @@
 - **Propuesta del agente:** Antigravity implementó `withDbRetry` con los 6 códigos de design §7 y tests con errores de Prisma construidos a mano. Marcó todos los criterios, pero omitió la prueba manual con Postgres caído que el plan pedía en sus trampas.
 - **Detectado por:** Claude Code, probando con el adapter real contra un puerto cerrado, una IP que no responde y una clave incorrecta.
 - **Resultado:** con `@prisma/adapter-pg` el puerto cerrado llega como `code: "ECONNREFUSED"` y el timeout como un `Error` plano del pool de `pg`. Ninguno era transitorio, así que una caída de DB respondía `500` en vez de `503` con `Retry-After`. Se documentó en design §7, se agregaron los códigos de red y los mensajes del pool, y se sumaron tests. Lección: un test con errores fabricados prueba la forma que uno supone, no la que llega en una caída real.
+
+### 20. T4.3: el agente detecta un error en el plan
+
+- **Propuesta del plan:** el plan de T4.3, escrito por Claude Code antes del código, pedía un test donde `PROCESSING→FAILED` y `PROCESSING→UNKNOWN` concurrentes daban un solo ganador.
+- **Detectado por:** Antigravity. Notó que `UNKNOWN→FAILED` es válida en R7.2, así que si `UNKNOWN` gana primero las dos transiciones devuelven `true`. Se detuvo y propuso un CAS concurrente al mismo destino, en vez de debilitar la aserción.
+- **Resultado:** Claude Code confirmó la contradicción y reemplazó el test por 10 CAS concurrentes `PROCESSING→UNKNOWN` desde 3 clientes y un test de orden entre `FAILED` y `UNKNOWN`. La regla de AGENTS.md de detenerse ante una contradicción funcionó en la dirección inversa: el agente corrigió al planificador.
