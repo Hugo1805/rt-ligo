@@ -69,4 +69,4 @@
 ## Fase 9 · Documentación
 
 - [x] 9.1 `README.md` con arquitectura, idempotencia, concurrencia, retry, webhooks, cómo correr y respuestas a la defensa técnica. — R14.4
-- [ ] 9.2 Cerrar `docs/ai-log.md` con los prompts y las correcciones reales.
+- [x] 9.2 Cerrar `docs/ai-log.md` con los prompts y las correcciones reales.

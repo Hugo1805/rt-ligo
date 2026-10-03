@@ -1,6 +1,6 @@
 # Bitácora de pilotaje del agente IA
 
-> Registro de lo que se le pidió al agente (Claude Code) y de lo que hubo que corregir o rediseñar.
+> Registro de lo que se le pidió a los agentes (Claude Code, Gemini y Antigravity) y de lo que hubo que corregir o rediseñar.
 > Solo se anotan hechos ocurridos. Cada entrada indica quién detectó el problema.
 
 ## Cómo se trabajó
@@ -8,7 +8,8 @@
 1. Se le dio al agente el PDF del challenge y se le pidió un plan, sin escribir código.
 2. Se fijó la metodología SDD: primero `requirements.md`, `design.md` y `tasks.md`, luego código.
 3. El plan se rechazó y corrigió varias veces antes de aprobarlo. Esas correcciones están abajo.
-4. La implementación sigue `tasks.md` tarea por tarea, con tests en cada fase.
+4. La implementación sigue `tasks.md` tarea por tarea, con un plan por tarea en `specs/cash-in/plans/`.
+5. Claude Code planifica, revisa, corrige y fusiona. Gemini (T2.1 a T2.4) y Antigravity con `agy -p` (desde T2.5) ejecutan los planes, desde la fase 3 en paralelo, un worktree por tarea. El detalle está en [orchestration.md](orchestration.md).
 
 ## Specs y prompts dados al agente
 
@@ -16,6 +17,10 @@
 |---|---|
 | Inicio | "Usaremos SDD para crear primero los specs. Stack de siempre: Bun, Hono, Prisma, PostgreSQL y Redis, Docker Compose para la DB y Redis en local, Terraform para la arquitectura dirigida a AWS." |
 | Inicio | Idempotencia con PostgreSQL + Redis. |
+| Specs | Las instrucciones citadas en las entradas 1 a 5 y 8 a 11. |
+| Ejecución con Gemini, T2.1 a T2.4 | El prompt de [plans/README.md](../specs/cash-in/plans/README.md#cómo-pedirle-una-tarea-a-gemini): "Lee AGENTS.md y specs/cash-in/plans/fase-2/T2.1-project-setup.md. Ejecuta solo ese plan. No toques archivos fuera de la sección "Archivos". Cuando termines, corre los comandos de "Verificación" y muéstrame la salida. Si algo del plan contradice los specs o no se puede cumplir, detente y explícalo antes de improvisar. No hagas commit." |
+| Ejecución con Antigravity, T2.5 a T7.3 | El prompt base de [orchestration.md](orchestration.md#lanzamiento-de-un-ejecutor), lanzado con `agy -p` desde cada worktree, más restricciones por tarea (nombres reales de lo existente, recursos compartidos, Terraform sin `apply`, no debilitar tests). |
+| Ejecución con subagentes de Claude Code, T5.1 y T6.1 | El mismo protocolo, con rutas absolutas al worktree y un reporte final de desvíos y fallas del plan. |
 
 ## Correcciones durante el plan
 
@@ -170,3 +175,37 @@
 - **Propuesta del agente:** Antigravity escribió 6 tests e2e contra nginx y dos réplicas. El de `card_timeout` esperaba `202 unknown` y recibía `200 completed`.
 - **Detectado por:** Antigravity, que en vez de aceptar el `200` rastreó la causa: el mock enviaba el webhook a los 1000 ms, antes del timeout de 3000 ms de la app, así que el webhook completaba la operación antes de la respuesta. Se detuvo porque el arreglo estaba en `docker-compose.yml`, fuera de su tabla de archivos.
 - **Resultado:** Claude Code fijó `MOCK_PSP_WEBHOOK_DELAY_MS: 6000` en `mock-psp` (introducido sin ese valor en T7.2). 6 de 6 en verde dos veces. La configuración vieja no rompía la app: ejercitaba R9.8 de punta a punta, y el test de timeout ahora ejercita el camino `UNKNOWN`.
+
+### 24. T3.6: claves sobrantes reportadas sin nombre de campo
+
+- **Propuesta del agente:** Antigravity mapeó cada issue de zod a `{ field: path.join("."), message }`.
+- **Detectado por:** Claude Code, probando el schema con un campo extra (`ammount`).
+- **Resultado:** con `.strict()`, zod 4 reporta todas las claves sobrantes en un solo issue con `path: []`, y el cliente recibía `field: ""`. `issuesToFieldErrors` ahora emite un error por clave con su nombre. Con test.
+
+### 25. T4.7: hueco del plan y una fusión automática que rompió `server.ts`
+
+- **Propuesta del agente:** Antigravity sumó `paymentProvider` y `lock` a `AppDeps`. Se detuvo antes de tocar `health.int.test.ts`, que llamaba a `createApp` sin esas dependencias y no estaba en su tabla de archivos.
+- **Detectado por:** Antigravity el hueco del plan; Claude Code la fusión. `git merge` combinó el `server.ts` del agente (que lanzaba error con `PROVIDER_MODE=http` porque partió de antes de T7.1) con el de `main`, y dejó imports y `paymentProvider` duplicados sin marcar conflicto.
+- **Resultado:** el revisor completó `health.int.test.ts` y reescribió `server.ts` con el proveedor de T7.1, el lock y el reconciliador de T6.1. Luego probó `POST /cash-in` contra el servidor real.
+
+### 26. Tests fuera de `src/`
+
+- **Propuesta del agente:** tests unitarios y de integración junto al código, como fijaba `AGENTS.md` desde la entrada 9.
+- **Corrección:** "cree 2 carpetas en test unit e integration porfa pasa todos los test a esa capetas ya que contaminan el codigo".
+- **Detectado por:** el usuario.
+- **Resultado:** 23 archivos movidos a `tests/unit/` y `tests/integration/`, replicando la ruta de `src/`, con los imports recalculados. Scripts por carpeta, `AGENTS.md` y planes pendientes actualizados. Las ramas en curso se movieron al fusionarlas.
+
+### 27. T9.1: los scripts de Prisma fallaban en un clon limpio
+
+- **Propuesta:** desde T2.1, `db:generate`, `db:migrate` y `db:deploy` llamaban a `prisma` sin `--bun`.
+- **Detectado por:** Claude Code, al correr los comandos del README desde un clon limpio, como pedía el plan de T9.1.
+- **Resultado:** con Node, el CLI no carga `.env` y fallaba con `Cannot resolve environment variable: DATABASE_URL`. En el repo de trabajo nunca se vio porque siempre se usó `bunx --bun prisma` a mano. Los scripts pasaron a `bunx --bun prisma`, en un commit aparte.
+
+## Lecciones
+
+1. **Un test con dobles prueba la forma que uno supone, no la que llega.** El health check colgaba 75 s con un host que no responde y una caída real de Postgres no se reintentaba, aunque los tests de ambos estaban en verde (#17, #19). Probar contra la dependencia real rota encontró los dos.
+2. **Si el agente repite un error, revisar primero las instrucciones.** Gemini commiteaba porque `AGENTS.md` se lo ordenaba (#14). Un fallback en la config ocultaba que faltaba `.env` (#15), y los scripts solo funcionaban por un hábito del revisor (#27).
+3. **La regla de detenerse ante una contradicción vale en las dos direcciones.** Antigravity y un subagente encontraron errores del plan y del spec en vez de forzar el código (#20, #21, #23, #25).
+4. **Un verde no basta: hay que romper a propósito lo que el test dice cubrir.** Las mutaciones mostraron que Redis sostiene la idempotencia solo mientras está arriba, y que la garantía real es PostgreSQL (#22).
+5. **El paralelismo exige reglas sobre lo compartido.** Ocho agentes sobre la misma base funcionaron porque nadie limpiaba tablas, los ids eran aleatorios y solo el revisor editaba `tasks.md` y el ai-log. Aun así, una fusión sin conflicto marcado rompió `server.ts` (#18, #25).
+6. **Las decisiones de estructura las toma el usuario.** Prisma en vez de SQL, Feature-First, bun:test y tests fuera de `src/` fueron correcciones del usuario (#1, #3, #9, #26).
