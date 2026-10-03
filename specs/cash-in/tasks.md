@@ -46,7 +46,7 @@
 
 ## Fase 5 · Webhooks
 
-- [ ] 5.1 `webhooks.service.ts` según design §6, en una sola transacción. — R9
+- [x] 5.1 `webhooks.service.ts` según design §6, en una sola transacción. — R9
 - [ ] 5.2 `webhooks.routes.ts`: firma sobre el body crudo y luego validación zod del payload. — R9.1 a R9.3
 - [ ] 5.3 `webhooks.int.test.ts` de duplicado, fuera de orden, antes de la respuesta, monto distinto y error transitorio. — R9
 
