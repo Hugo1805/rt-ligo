@@ -12,6 +12,9 @@ import { createCashInRepository } from "./features/cash-in/cash-in.repository";
 import { createWalletService } from "./features/wallet/wallet.service";
 import { createCashInService } from "./features/cash-in/cash-in.service";
 import { errorHandler, notFoundHandler } from "./shared/error-handler";
+import { webhooksRoutes } from "./features/webhooks/webhooks.routes";
+import { createWebhooksService, type WebhooksService } from "./features/webhooks/webhooks.service";
+import { withDbRetry } from "./shared/db-retry";
 
 export interface AppDeps {
   config: Config;
@@ -20,6 +23,8 @@ export interface AppDeps {
   redis: Redis;
   paymentProvider: PaymentProvider;
   lock: Lock;
+  webhooksService?: WebhooksService;
+  now?: () => number;
 }
 
 export function createApp(deps: AppDeps): Hono<AppEnv> {
@@ -47,8 +52,23 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
 
   const cashInRoutes = createCashInRoutes(cashInService, deps.config);
 
+  const webhooksService =
+    deps.webhooksService ??
+    createWebhooksService({
+      prisma: deps.prisma,
+      applyCredit: walletService.applyCredit,
+      withDbRetry,
+    });
+
+  const webhookRoutes = webhooksRoutes({
+    config: deps.config,
+    webhooksService,
+    now: deps.now,
+  });
+
   app.route("/", healthRoutes);
   app.route("/", cashInRoutes);
+  app.route("/webhooks", webhookRoutes);
 
   return app;
 }

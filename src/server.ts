@@ -6,6 +6,8 @@ import { createRedisLock } from "./infra/lock";
 import { createApp } from "./app";
 import { createReconciler } from "./features/reconciliation/reconciliation.service";
 import { createWalletService } from "./features/wallet/wallet.service";
+import { createWebhooksService } from "./features/webhooks/webhooks.service";
+import { withDbRetry } from "./shared/db-retry";
 import { FakePaymentProvider } from "./infra/payment-provider/fake.provider";
 import { HttpPaymentProvider } from "./infra/payment-provider/http.provider";
 import type { PaymentProvider } from "./infra/payment-provider/payment-provider";
@@ -29,6 +31,13 @@ export const paymentProvider: PaymentProvider =
       )
     : new FakePaymentProvider();
 
+const walletService = createWalletService({ prisma });
+const webhooksService = createWebhooksService({
+  prisma,
+  applyCredit: walletService.applyCredit,
+  withDbRetry,
+});
+
 const app = createApp({
   config,
   logger,
@@ -36,6 +45,7 @@ const app = createApp({
   redis,
   paymentProvider,
   lock,
+  webhooksService,
 });
 
 export const server = Bun.serve({
@@ -46,7 +56,6 @@ export const server = Bun.serve({
 logger.info({ port: config.PORT }, `Server started on port ${config.PORT}`);
 
 // Reconciler: runs in every pod, coordinated only through the lease in PostgreSQL.
-const walletService = createWalletService({ prisma });
 const reconciler = createReconciler({
   prisma,
   paymentProvider,
