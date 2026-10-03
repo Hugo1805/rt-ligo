@@ -30,7 +30,7 @@
 - [ ] 3.2 `src/shared/errors.ts` con `AppError` y el catálogo, y `src/shared/error-handler.ts`. Test unitario. — R12
 - [ ] 3.3 `src/features/cash-in/cash-in.request-hash.ts`. Test unitario. — R2.4, R2.5
 - [ ] 3.4 `src/shared/retry.ts` con backoff y jitter. Test unitario. — R6.3
-- [ ] 3.5 `src/features/webhooks/webhooks.signature.ts`. Test unitario. — R9.2
+- [x] 3.5 `src/features/webhooks/webhooks.signature.ts`. Test unitario. — R9.2
 - [ ] 3.6 `cash-in.schemas.ts` y `webhooks.schemas.ts` con zod, más el hook que los traduce a `AppError`. Test unitario de cada regla y de `.strict()`. — R1.3 a R1.6, R2.1, R2.2, R9.3
 
 ## Fase 4 · Cash-in
