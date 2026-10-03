@@ -26,9 +26,9 @@ No implementes nada que no esté en los specs. Si falta algo, detente y propón 
 2. Lee su plan en `specs/cash-in/plans/T<id>-*.md`. Si no existe, escríbelo primero con la plantilla de [specs/cash-in/plans/README.md](specs/cash-in/plans/README.md).
 3. Implementa solo lo que dice el plan. Nada fuera de "Archivos" sin avisar.
 4. Corre los tests indicados en el plan. Todos deben pasar.
-5. Marca la tarea en `tasks.md` y el estado del plan como `done`.
-6. Si el agente se equivocó y hubo que corregirlo, agrega la entrada en [docs/ai-log.md](docs/ai-log.md).
-7. Haz un commit por tarea.
+5. Deja el plan en estado `review` y marca sus criterios de aceptación. No hagas commit: el ejecutor entrega el diff sin commitear.
+6. Quien revisa compara el diff con el plan, corrige, y si el agente se equivocó agrega la entrada en [docs/ai-log.md](docs/ai-log.md).
+7. Quien revisa marca la tarea en `tasks.md`, pasa el plan a `done` y hace un commit por tarea.
 
 ## Stack
 
@@ -157,6 +157,7 @@ bun run typecheck
 ## Git
 
 - Rama principal `main`. Repo público en GitHub.
+- El commit lo hace quien revisa, nunca el agente ejecutor.
 - Un commit por tarea con Conventional Commits y el id de la tarea: `feat(cash-in): crear operación idempotente [T4.3]`.
 - Tipos: `feat`, `fix`, `test`, `docs`, `chore`, `refactor`, `infra`.
 - No hagas commit con tests rojos.

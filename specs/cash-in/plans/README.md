@@ -10,7 +10,7 @@ El plan baja el spec al nivel de archivos, pasos y criterios de aceptación, par
 2. Ejecutar     El agente ejecutor lee AGENTS.md y el plan, e implementa. Estado: in-progress.
 3. Verificar    El agente corre los comandos de "Verificación". Todos en verde. Estado: review.
 4. Revisar      Una persona u otro agente revisa el diff contra los criterios y las trampas conocidas.
-5. Cerrar       Se marca la tarea en tasks.md, el plan pasa a done y se hace el commit de la tarea.
+5. Cerrar       Quien revisa marca la tarea en tasks.md, pasa el plan a done y hace el commit de la tarea.
 ```
 
 Si la revisión encuentra un error del agente, se corrige y se anota en [docs/ai-log.md](../../../docs/ai-log.md) con quién lo detectó.

@@ -107,3 +107,9 @@
 - **Propuesta del agente:** Gemini instaló Prisma 7.10 sin `@prisma/adapter-pg`, aunque el plan pedía seguir la guía de la versión instalada. Además, `test:int` y `test:e2e` fallaban con código 1 mientras no hubiera tests, y el ejecutor hizo el commit él mismo.
 - **Detectado por:** Claude Code, al revisar la rama `chore/T2.1-project-setup`.
 - **Resultado:** se agregó `@prisma/adapter-pg` y `--pass-with-no-tests`. El plan de T2.3 suma las trampas de Prisma 7: generador `prisma-client` con `output`, URL en `prisma.config.ts`, cliente construido con el adapter y seed que ya no corre solo.
+
+### 14. T2.2: el ejecutor commitea porque las reglas se contradecían
+
+- **Propuesta del agente:** Gemini entregó T2.2 correcta, pero de nuevo hizo el commit y marcó el plan como `done` sin pasar por revisión, igual que en T2.1.
+- **Detectado por:** Claude Code, al revisar la rama `chore/T2.2-docker-compose`. Al buscar la causa, encontró que `AGENTS.md` ordenaba "Haz un commit por tarea" y marcar `done`, mientras el README de plans decía "No hagas commit". El agente seguía la regla de mayor jerarquía.
+- **Resultado:** `AGENTS.md` ahora dice que el ejecutor deja el plan en `review` sin commitear, y que quien revisa marca `tasks.md`, pasa a `done` y commitea. Lección: si el agente repite un error, revisar primero las instrucciones antes de culpar al agente.
