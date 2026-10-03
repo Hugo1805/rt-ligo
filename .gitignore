@@ -1,0 +1,29 @@
+# Dependencias y build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Prisma generado
+src/generated/
+
+# Terraform
+infra/terraform/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Logs y OS
+*.log
+.DS_Store
+coverage/
+
+# Material del challenge, no se publica
+*.pdf
