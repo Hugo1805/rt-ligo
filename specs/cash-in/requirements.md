@@ -115,11 +115,11 @@ Fuera del alcance:
 ## R10 · Reinicio del servicio y reconciliación
 
 1. El estado de cada operación DEBE vivir en PostgreSQL, de modo que un reinicio no pierda operaciones en curso.
-2. Un reconciliador DEBE tomar operaciones `PROCESSING` o `UNKNOWN` más antiguas que un umbral configurable.
+2. Un reconciliador DEBE tomar operaciones `PENDING`, `PROCESSING` o `UNKNOWN` más antiguas que un umbral configurable. Una `PENDING` nunca envió el cobro, así que el reconciliador lo envía con su misma referencia.
 3. Para cada una DEBE consultar al proveedor por referencia y aplicar el resultado.
 4. SI el proveedor no conoce la referencia, el reconciliador DEBE reenviar el cobro con la misma referencia.
 5. Dos pods NO DEBEN reconciliar la misma operación a la vez.
-6. Tras un máximo de intentos sin resolución, la operación DEBE quedar `UNKNOWN` con una alerta en logs para revisión manual.
+6. Tras un máximo de intentos sin resolución, la operación DEBE quedar `UNKNOWN` con una alerta en logs para revisión manual, y el reconciliador NO DEBE volver a tomarla.
 
 ## R11 · Fallo temporal de base de datos
 

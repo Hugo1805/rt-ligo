@@ -25,12 +25,12 @@ El código se agrupa por feature. Cada feature contiene sus rutas, schemas, serv
 
 | Carpeta | Contenido |
 |---|---|
-| `src/features/cash-in/` | `POST /cash-in`, schemas zod, servicio, repositorio de operaciones, máquina de estados, huella del request. |
+| `src/features/cash-in/` | `POST /cash-in`, schemas zod, servicio, repositorio de operaciones, huella del request. |
 | `src/features/webhooks/` | `POST /webhooks/payment`, schema del evento, firma HMAC, dedupe y aplicación del evento. |
-| `src/features/wallet/` | `applyCredit`, ledger y repositorio de wallets. |
+| `src/features/wallet/` | `applyCredit`, `getWallet`, ledger y repositorio de wallets. |
 | `src/features/reconciliation/` | Reconciliador con lease. |
 | `src/features/health/` | `GET /health`. |
-| `src/shared/` | `AppError`, catálogo, error handler, política de retry, utilidades de dinero. |
+| `src/shared/` | `AppError`, catálogo, error handler, política de retry, utilidades de dinero y máquina de estados de la operación. |
 | `src/infra/` | Config, cliente Prisma, cliente Redis, lock, logger, correlation ID, adaptadores de `payment-provider/`. |
 | `tools/mock-psp/` | Proveedor falso como servicio HTTP para e2e. |
 
@@ -42,7 +42,6 @@ Dentro de cada feature se mantiene la separación de responsabilidades:
 | `<feature>.schemas.ts` | Schemas zod y tipos derivados. |
 | `<feature>.service.ts` | Orquesta lock, operación, proveedor y abono. |
 | `<feature>.repository.ts` | Acceso a datos solo con cliente Prisma. |
-| `cash-in.state-machine.ts` | Máquina de estados pura, sin IO. |
 
 El proveedor se accede por el puerto `PaymentProvider`. Hay dos adaptadores:
 - `FakePaymentProvider` en memoria, para tests unitarios y de integración.
@@ -58,8 +57,8 @@ sequenceDiagram
   participant B as Pod B
   participant R as Redis
   participant DB as PostgreSQL
-  A->>R: SET lock:cashin:u1:k1 ownerA NX PX 30000
-  B->>R: SET lock:cashin:u1:k1 ownerB NX PX 30000
+  A->>R: SET lock:cashin:u1:k1 ownerA NX PX 15000
+  B->>R: SET lock:cashin:u1:k1 ownerB NX PX 15000
   R-->>A: OK
   R-->>B: nil (lock tomado)
   B->>DB: findUnique(userId, key)
@@ -155,7 +154,8 @@ stateDiagram-v2
   FAILED --> [*]
 ```
 
-- `src/features/cash-in/cash-in.state-machine.ts` es puro: `canTransition(from, to)` y `allowedSources(to)`.
+- `src/shared/operation-state-machine.ts` es puro: `canTransition(from, to)` y `allowedSources(to)`. Vive en `shared/` porque lo usan cash-in, webhooks y el reconciliador.
+- Una feature importa de otra solo a través de su `<feature>.service.ts`.
 - Toda transición en DB es un compare-and-set:
 
 ```ts
@@ -171,7 +171,15 @@ if (count === 0) { /* otro actor ganó: releer y decidir */ }
 
 ## 5. Abono y race conditions · R8
 
-`applyCredit(operationId, providerChargeId)`, en `src/features/wallet/wallet.service.ts`, es la única función que acredita. La usan el flujo síncrono, el webhook y el reconciliador.
+`applyCredit({ operationId, providerChargeId, actor }, tx?)`, en `src/features/wallet/wallet.service.ts`, es la única función que acredita. La usan el flujo síncrono, el webhook y el reconciliador.
+
+- Si recibe `tx`, trabaja dentro de esa transacción y no abre otra. El webhook la usa así, dentro de su propia transacción.
+- Devuelve `{ applied, from, balanceAfter }`. `applied` es `false` cuando la operación ya era terminal, `from` es el estado de origen para el log de transición y `balanceAfter` sale del asiento.
+- `actor` es `api`, `webhook` o `reconciler`.
+- `applyCredit` no loguea. Con un `tx` externo, un rollback posterior haría mentir al log. Quien llama registra la transición después del commit con `from` y el mismo `actor`.
+- Si `applied` es `false`, `from` es el estado leído. `balanceAfter` es el del asiento existente si la operación ya está `COMPLETED`, o `null` si no.
+- `userId` y `amount` se leen de la operación dentro de la misma transacción.
+- `getWallet(userId)` del mismo servicio es la única forma en que cash-in lee una wallet.
 
 ```ts
 await prisma.$transaction(async (tx) => {
@@ -234,6 +242,17 @@ Respuesta: `200 { "received": true, "duplicate": false }`.
    4. Aplicar la transición: `succeeded` usa la lógica de `applyCredit`, `failed` hace CAS a `FAILED`, `pending` no cambia estado.
    5. Si la transición no es válida desde el estado actual, se registra `outcome = "IGNORED_OUT_OF_ORDER"` y se responde `200`.
    6. Marcar `processedAt` y `outcome` en el evento.
+
+Valores de `outcome`:
+
+| outcome | Cuándo |
+|---|---|
+| `APPLIED` | El evento cambió el estado de la operación. |
+| `NOOP_ALREADY_APPLIED` | La operación ya estaba en el estado que pide el evento. |
+| `IGNORED_OUT_OF_ORDER` | La transición no es válida desde el estado actual. |
+| `ORPHAN` | No existe una operación con esa referencia. |
+| `AMOUNT_MISMATCH` | Monto o moneda no coinciden con la operación. |
+| `PENDING_NO_CHANGE` | Evento `charge.pending`, que no cambia estado. |
 3. Si la transacción falla por un error transitorio, el insert del evento se revierte y se responde `5xx`. El reintento del proveedor lo procesa de cero.
 
 El punto 3 es clave: si el evento se marcara como visto fuera de la transacción del efecto, un fallo intermedio haría que el reintento se descartara como duplicado y el abono se perdería.
@@ -244,6 +263,7 @@ El punto 3 es clave: si el evento se marcara como visto fuera de la transacción
 |---|---|---|---|
 | PROCESSING | COMPLETED + abono | FAILED | sin cambio |
 | UNKNOWN | COMPLETED + abono | FAILED | sin cambio |
+| PENDING | ignorado, anomalía | FAILED | sin cambio |
 | COMPLETED | no-op | ignorado, anomalía | ignorado |
 | FAILED | ignorado, anomalía crítica | no-op | ignorado |
 
@@ -277,14 +297,14 @@ El timeout no se reintenta en línea para no alargar el request de la app. Reint
 
 Corre en cada pod con un intervalo configurable.
 
-1. Busca operaciones `PROCESSING` o `UNKNOWN` con `updatedAt` más viejo que el umbral, 30 s por defecto.
+1. Busca operaciones `PENDING`, `PROCESSING` o `UNKNOWN` con `updatedAt` más viejo que el umbral, 30 s por defecto, y con `reconcileAttempts` menor que `RECONCILE_MAX_ATTEMPTS`.
 2. Reclama cada una con un lease:
 
 ```ts
 const { count } = await prisma.cashInOperation.updateMany({
   where: {
     id,
-    status: { in: ["PROCESSING", "UNKNOWN"] },
+    status: { in: ["PENDING", "PROCESSING", "UNKNOWN"] },
     OR: [{ leaseUntil: null }, { leaseUntil: { lt: now } }],
   },
   data: { leaseOwner: podId, leaseUntil: addSeconds(now, 60), reconcileAttempts: { increment: 1 } },
@@ -292,12 +312,13 @@ const { count } = await prisma.cashInOperation.updateMany({
 ```
 
 3. Solo el pod con `count = 1` la procesa.
-4. Llama `getCharge(reference)`:
+4. Si la operación está `PENDING`, el cobro nunca salió: la pasa a `PROCESSING` con CAS y envía `charge` con la misma referencia. Así se completa la intención del usuario tras una caída entre el `create` y el envío.
+5. Si está `PROCESSING` o `UNKNOWN`, llama `getCharge(reference)`:
    - `succeeded`: `applyCredit`.
-   - `failed`: CAS a `FAILED`.
+   - `declined`: CAS a `FAILED`.
    - `not_found`: reenvía `charge` con la misma referencia. Esto cubre un reinicio justo después de pasar a `PROCESSING` y antes de que el cobro saliera.
    - Error: libera el lease y reintenta en el siguiente ciclo.
-5. Tras `RECONCILE_MAX_ATTEMPTS` intentos, deja la operación `UNKNOWN` y emite un log `error` para revisión manual.
+6. Al llegar a `RECONCILE_MAX_ATTEMPTS` intentos, deja la operación `UNKNOWN`, emite un log `error` con `event: "reconcile.exhausted"` y no la vuelve a tomar. Queda para revisión manual.
 
 ## 8. Contrato HTTP
 
@@ -329,7 +350,7 @@ Respuesta `202`, en curso o incierta:
 | `pending`, `processing`, `unknown` | 202 |
 | `failed` | 422 `PAYMENT_DECLINED` |
 
-Toda respuesta de una key ya existente lleva `Idempotent-Replayed: true`. Toda respuesta lleva `X-Request-Id`.
+Toda respuesta de una key ya existente con la misma huella lleva `Idempotent-Replayed: true`. El `422 IDEMPOTENCY_KEY_REUSED` no lo lleva, porque un body distinto no es un replay. Toda respuesta lleva `X-Request-Id`.
 
 Los montos se guardan como `Decimal(18,2)` y se calculan con Decimal. En JSON se emiten como número, como pide el contrato del PDF.
 
@@ -344,20 +365,21 @@ export const idempotencyKeySchema = z.uuid({
     issue.input === undefined ? "IDEMPOTENCY_KEY_MISSING" : "IDEMPOTENCY_KEY_INVALID",
 });
 
-export const cashInRequestSchema = z
+// El tope llega como parámetro. El schema no importa una config cargada a nivel de módulo.
+export const createCashInRequestSchema = (maxAmount: number) => z
   .object({
     user_id: z.string().trim().min(1).max(64),
     amount: z
       .number()
       .positive()
-      .max(config.CASH_IN_MAX_AMOUNT)
+      .max(maxAmount)
       .refine((v) => /^\d+(\.\d{1,2})?$/.test(String(v)), "Máximo 2 decimales"),
     currency: z.literal("PEN", { error: "Solo se acepta PEN" }),
     payment_method: z.string().trim().min(1).max(64),
   })
   .strict();
 
-export type CashInRequest = z.infer<typeof cashInRequestSchema>;
+export type CashInRequest = z.infer<ReturnType<typeof createCashInRequestSchema>>;
 ```
 
 Integración con Hono:
@@ -367,6 +389,7 @@ Integración con Hono:
 - Un body que no es JSON también responde `VALIDATION_ERROR`.
 - Cada `issue` de zod se traduce a `{ "field": issue.path.join("."), "message": issue.message }` en el campo `errors`.
 - `.strict()` rechaza campos desconocidos. En una API de dinero es mejor fallar ante un campo inesperado, por ejemplo un typo como `ammount`, que ignorarlo en silencio. Además deja la huella del request estable.
+- El payload del webhook no usa `.strict()`: descarta campos desconocidos. Si el proveedor agrega un campo, un `400` provocaría reintentos infinitos de su lado.
 - La validación ocurre antes del lock Redis, de la DB y del proveedor. Un request inválido no tiene efectos.
 
 Ejemplo de respuesta:
@@ -440,10 +463,11 @@ Nunca se exponen stack traces ni mensajes crudos del proveedor o de Prisma. Esos
 | `IDEMPOTENCY_KEY_REUSED` | 422 | false | Misma key con body distinto. |
 | `CURRENCY_MISMATCH` | 422 | false | La moneda no coincide con la wallet. |
 | `PAYMENT_DECLINED` | 422 | false | El proveedor rechazó el cobro. Lleva `operation_id`. |
+| `NOT_FOUND` | 404 | false | La ruta no existe. |
 | `INTERNAL_ERROR` | 500 | true | Error inesperado. |
 | `SERVICE_UNAVAILABLE` | 503 | true | DB no disponible tras reintentos. Lleva `Retry-After: 2`. |
 
-Implementación: `src/shared/errors.ts` define `AppError` y el catálogo. `src/shared/error-handler.ts` traduce `AppError`, errores de validación y errores desconocidos.
+Implementación: `src/shared/errors.ts` define `AppError` y el catálogo. `src/shared/error-handler.ts` traduce `AppError`, errores de validación y errores desconocidos. El `HTTPException` 400 que Hono lanza ante un body que no es JSON sale como `VALIDATION_ERROR`. Una ruta inexistente sale como `NOT_FOUND` desde `app.notFound`.
 
 ## 10. Modelo de datos · R8, R14
 
@@ -533,6 +557,7 @@ type ChargeResult =
   | { status: "succeeded"; chargeId: string }
   | { status: "declined"; chargeId: string; failureCode: string };
 // Timeouts y errores técnicos se lanzan como ProviderTimeoutError o ProviderUnavailableError.
+// Una respuesta que no encaja en el contrato se lanza como ProviderUnexpectedError.
 ```
 
 Escenarios del proveedor falso, elegidos por `payment_method`:
@@ -542,9 +567,25 @@ Escenarios del proveedor falso, elegidos por `payment_method`:
 | `card_ok` o cualquier otro | Cobra y responde `succeeded`. |
 | `card_declined` | Responde `declined` con `insufficient_funds`. |
 | `card_timeout` | Registra el cobro y no responde antes del timeout. Luego emite `charge.succeeded`. |
-| `card_flaky` | Falla con `503` la primera vez y luego cobra. Prueba el retry con la misma referencia. |
+| `card_flaky` | Falla con `503` la primera vez para cada referencia y luego cobra. Prueba el retry con la misma referencia. |
 
 Ambos adaptadores son idempotentes por `reference`: la misma referencia devuelve el mismo cargo.
+
+| Error del adaptador | Acción del servicio |
+|---|---|
+| `ProviderUnavailableError` | Reintento técnico con la misma referencia. |
+| `ProviderTimeoutError` | `UNKNOWN` sin reintento en línea. |
+| `ProviderUnexpectedError` | `UNKNOWN` sin reintento. Nunca `FAILED` sin certeza. Lo resuelve el reconciliador. |
+
+### Contrato HTTP del `mock-psp`
+
+| Request | Respuesta |
+|---|---|
+| `POST /charges` con `{ reference, amount, currency, payment_method }` | `200 { status: "succeeded", charge_id }` o `200 { status: "declined", charge_id, failure_code }` |
+| `GET /charges/:reference` | `200` con el mismo cuerpo, o `404` si no conoce la referencia. |
+| `GET /__admin/charges/:reference` | `200 { charge, attempts }`. Solo para e2e. |
+
+Un rechazo es un resultado de negocio y va como `200` con `status: "declined"`, nunca como 4xx. El `HttpPaymentProvider` valida cada respuesta con zod.
 
 ## 12. Observabilidad · R13
 
@@ -578,6 +619,7 @@ El TTL del lock cubre el peor caso del request: 3 intentos de 3 s más backoff, 
 **Local, Docker Compose:**
 - `postgres` y `redis` siempre.
 - Perfil `e2e`: `app1`, `app2`, `nginx` en round robin y `mock-psp`.
+- Los tests e2e verifican estado, asientos y eventos leyendo PostgreSQL con Prisma. No hay endpoint de consulta de operaciones.
 
 **AWS, Terraform en `infra/terraform`:**
 - VPC con subredes públicas y privadas.

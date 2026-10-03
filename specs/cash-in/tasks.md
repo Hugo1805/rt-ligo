@@ -1,7 +1,7 @@
 # Tasks · Wallet Cash-In
 
 > Tareas atómicas en orden de ejecución. Cada una cita los requisitos de [requirements.md](requirements.md) que cubre.
-> Cada tarea tiene su plan en [plans/](plans/) con el nombre `T<id>-<slug>.md`. El plan se escribe antes de implementar.
+> Cada tarea tiene su plan en [plans/](plans/), dentro de la carpeta de su fase: `plans/fase-<n>/T<id>-<slug>.md`. El plan se escribe antes de implementar.
 > Una tarea se marca hecha solo cuando sus tests pasan. Un commit por tarea.
 > Las rutas siguen la estructura Feature-First de [AGENTS.md](../../AGENTS.md#estructura-feature-first).
 
@@ -26,7 +26,7 @@
 
 ## Fase 3 · Dominio puro
 
-- [ ] 3.1 `src/features/cash-in/cash-in.state-machine.ts` con `canTransition` y `allowedSources`. Test unitario. — R7
+- [ ] 3.1 `src/shared/operation-state-machine.ts` con `canTransition` y `allowedSources`. Test unitario. — R7
 - [ ] 3.2 `src/shared/errors.ts` con `AppError` y el catálogo, y `src/shared/error-handler.ts`. Test unitario. — R12
 - [ ] 3.3 `src/features/cash-in/cash-in.request-hash.ts`. Test unitario. — R2.4, R2.5
 - [ ] 3.4 `src/shared/retry.ts` con backoff y jitter. Test unitario. — R6.3

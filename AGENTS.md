@@ -15,7 +15,7 @@ Orden de precedencia. Si dos documentos se contradicen, gana el de arriba y se r
 1. [specs/cash-in/requirements.md](specs/cash-in/requirements.md): qué debe cumplir el sistema.
 2. [specs/cash-in/design.md](specs/cash-in/design.md): cómo se cumple.
 3. [specs/cash-in/tasks.md](specs/cash-in/tasks.md): orden de trabajo.
-4. [specs/cash-in/plans/](specs/cash-in/plans/): plan detallado de cada tarea.
+4. [specs/cash-in/plans/](specs/cash-in/plans/): plan detallado de cada tarea, en una carpeta por fase.
 5. Este archivo.
 
 No implementes nada que no esté en los specs. Si falta algo, detente y propón el cambio en el spec primero.
@@ -23,7 +23,7 @@ No implementes nada que no esté en los specs. Si falta algo, detente y propón 
 ## Flujo de trabajo (SDD)
 
 1. Toma la siguiente tarea sin marcar de `tasks.md`.
-2. Lee su plan en `specs/cash-in/plans/T<id>-*.md`. Si no existe, escríbelo primero con la plantilla de [specs/cash-in/plans/README.md](specs/cash-in/plans/README.md).
+2. Lee su plan en `specs/cash-in/plans/fase-<n>/T<id>-*.md`, donde `<n>` es la fase de la tarea. Si no existe, escríbelo primero con la plantilla de [specs/cash-in/plans/README.md](specs/cash-in/plans/README.md).
 3. Implementa solo lo que dice el plan. Nada fuera de "Archivos" sin avisar.
 4. Corre los tests indicados en el plan. Todos deben pasar.
 5. Deja el plan en estado `review` y marca sus criterios de aceptación. No hagas commit: el ejecutor entrega el diff sin commitear.
@@ -54,12 +54,12 @@ El código se organiza por feature, no por capa técnica. Todo lo de una feature
 ```
 src/
   features/
-    cash-in/          POST /cash-in, máquina de estados, huella, repositorio de operaciones
+    cash-in/          POST /cash-in, huella, repositorio de operaciones
     webhooks/         POST /webhooks/payment, firma, dedupe de eventos
     wallet/           applyCredit, ledger, repositorio de wallets
     reconciliation/   reconciliador con lease
     health/           GET /health
-  shared/             errores, error handler, retry, dinero. Sin lógica de negocio.
+  shared/             errores, error handler, retry, dinero y máquina de estados de la operación. Sin IO.
   infra/              config, prisma, redis, lock, logger, correlation ID, payment-provider
   app.ts              factory de la app Hono con dependencias inyectadas
   server.ts           arranque
@@ -79,14 +79,14 @@ Convención de nombres dentro de una feature, con `cash-in` como ejemplo:
 | `cash-in.schemas.ts` | Schemas zod y tipos con `z.infer`. |
 | `cash-in.service.ts` | Orquestación del caso de uso. |
 | `cash-in.repository.ts` | Acceso a datos con el cliente Prisma. |
-| `cash-in.state-machine.ts` | Lógica pura, sin IO. |
 | `cash-in.unit.test.ts` | Tests unitarios, junto al código. |
 | `cash-in.int.test.ts` | Tests de integración, junto al código. |
 
 Reglas de dependencia:
 - Una feature puede importar de `shared/` e `infra/`.
 - `shared/` e `infra/` nunca importan de `features/`.
-- Una feature solo importa de otra a través de su servicio. Hoy el único caso es `applyCredit` de `wallet`.
+- Una feature solo importa de otra a través de su archivo `<feature>.service.ts`. Hoy `wallet.service.ts` expone `applyCredit` y `getWallet`.
+- La máquina de estados vive en `src/shared/operation-state-machine.ts` porque es pura y la usan cash-in, webhooks y el reconciliador.
 - Las rutas nunca llaman a Prisma directo.
 
 ## Reglas no negociables
@@ -116,7 +116,7 @@ Reglas de dependencia:
 
 **Validación**
 - Toda entrada se valida con zod antes de cualquier efecto: headers, body, payload de webhook y variables de entorno.
-- Los schemas de body usan `.strict()`.
+- Los schemas de body de nuestra API usan `.strict()`. El payload del webhook es la excepción: descarta campos desconocidos sin fallar, para que un campo nuevo del proveedor no provoque reintentos infinitos.
 
 **Retry**
 - Nunca reintentes un rechazo de negocio del proveedor.
